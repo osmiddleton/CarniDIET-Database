@@ -87,210 +87,59 @@ library(mapproj)
 
 #---- Load data ----
 # Load Phylacine - for name standardisation:
-phylacine <- read.csv("./Data/TraitData/phylacine/Trait_data.csv", header = TRUE)
+#phylacine <- read.csv("./Data/TraitData/phylacine/Trait_data.csv", header = TRUE)
 
 # Load CarniDIET
-carnidiet <- read.csv("./Data/CarniDIET Database/CarniDIET_Full_Current.csv")
-carnidiet <- carnidiet[c(2:75)]
+carnidiet <- read.csv("./Version 1.0/CarniDIET 1.0.csv")
+#carnidiet <- carnidiet[c(2:75)]
 
-# Load (NOW-TIDY) potential species list
-cd.wos.hits <- read.csv("./Data/Species lists/All carnivorous mammals/CarniDiet_PotentialSpecies.csv", header = TRUE)
-
-# ---- (DONE) Tidy potential species list dataframe ----
-cd.wos.hits$Bin. <- gsub(" ", "_", cd.wos.hits$Bin.)
-
-# Step 1: Remove extinct species
-extincts <- phylacine %>%
-  filter(IUCN.Status.1.2 %in% c("EP" , "EX", "EW"))
-extincts <- as.character(levels(factor(extincts$Binomial.1.2)))
-cd.wos.hits <- cd.wos.hits[-which(cd.wos.hits$Bin. %in% extincts),]
-levels(factor(cd.wos.hits$Bin.))
-
-# Step 2: Identify which species need their names changed
-which(!cd.wos.hits$Bin. %in% levels(factor(phylacine$Binomial.1.2)))
-cd.wos.hits$Bin.[which(!cd.wos.hits$Bin. %in% levels(factor(phylacine$Binomial.1.2)))]
-# Herpestes_flavescens_(Galerella_flavescens_provides_hits), Monodelphis_maraxina,
-# Monodelphis_rubida, Monodelphis_sorex, Monodelphis_theresa
-# Monodelphis_umbristriata, Pithecia_irrorata, Pithecia_monachus, 
-
-# Monodelphis_umbristriata, Pithecia_monachus and Pithecia irrorata are
-# missing from Phylacine.
-# Pithecia_monachus and Pithecia_ irrorata are in IUCN
-# Monodelphis_umbristriata is on Wikipedia, but not IUCN
-
-cd.wos.hits$Bin. <- plyr::revalue(cd.wos.hits$Bin.,
-                          c("Herpestes_flavescens_(Galerella_flavescens_provides_hits)" = "Herpestes_flavescens",
-                            "Monodelphis_maraxina" = "Monodelphis_glirina",
-                            "Monodelphis_rubida" = "Monodelphis_americana",
-                            "Monodelphis_theresa" = "Monodelphis_scalops",
-                            "Monodelphis_sorex" = "Monodelphis_dimidiata"))
-
-# Change family level names
-levels(factor(cd.wos.hits$Family))
-cd.wos.hits$Family <- plyr::revalue(cd.wos.hits$Family, c("CANIDAE" = "Canidae",
-                                                          "FELIDAE" = "Felidae",
-                                                          "VIVERRIDAE" = "Viverridae",
-                                                          "EUPLERIDAE" = "Eupleridae",
-                                                          "HERPESTIDAE" = "Herpestidae",
-                                                          "HYAENIDAE" = "Hyaenidae",
-                                                          "MEPHITIDAE" = "Mephitidae",
-                                                          "MUSTELIDAE" = "Mustelidae",
-                                                          "PRIONODONTIDAE" = "Prionodontidae",
-                                                          "PROCYONIDAE" = "Procyonidae",
-                                                          "URSIDAE" = "Ursidae",
-                                                          "CRICETIDAE" = "Cricetidae",
-                                                          "DASYURIDAE" = "Dasyuridae",
-                                                          "DIDELPHIDAE" = "Didelphidae",
-                                                          "ERINACEIDAE" = "Erinaceidae",
-                                                          "GLIRIDAE" = "Gliridae",
-                                                          "LORISIDAE" = "Lorisidae",
-                                                          "MEGADERMATIDAE" = "Megadermatidae",
-                                                          "PHYLLOSTOMIDAE" = "Phyllostomidae",
-                                                          "PITHECIIDAE" = "Pitheciidae",
-                                                          "SORICIDAE" = "Soricidae",
-                                                          "TENRECIDAE" = "Tenrecidae",
-                                                          "TUPAIIDAE" = "Tupaiidae"))
-
-# Check number of families and orders selected from MammalDIET
-levels(factor(cd.wos.hits$Order))
-levels(factor(cd.wos.hits$Family))
-
-# # Save this new, tidied dataframe 
-# write.csv(cd.wos.hits, "./Data/Species lists/All carnivorous mammals/CarniDIET_PotentialSpecies.csv")
-
-
-# ---- (DONE) Make sure species dietary studies are within species' geographic ranges ----
-#IUCN ranges
-ranges <- st_read("./Data/GIS/TERRESTRIAL_MAMMALS", "TERRESTRIAL_MAMMALS")
-
-# # CarniDIET
-carnidiet <- read.csv("./Data/CarniDIET Database/CarniDIET_Full_Current.csv")
-carnidiet <- carnidiet[c(2:75)]
-
-# Tidy binomial names to match IUCN
-carnidiet$CarniBinom <- as.character(carnidiet$CarniBinom)
-carnidiet$CarniBinom <- gsub("_", " ", carnidiet$CarniBinom)
-carnidiet$CarniBinom <- as.factor(carnidiet$CarniBinom)
-
-temporal.diet <- carnidiet %>% 
-  dplyr::group_by(Family,CarniBinom, Age, Sex,
-                  PrimaryRef, Country, Region,
-                  SiteName, AltitudeMaximum,
-                  Season,Start.Year, End.Year,BIOME,
-                  Longitude.Centroid.Mean.x, Latitude.Centroid.Mean.x,
-                  Scat.Stomach.Tissue, Coordinates.Source) %>% 
-  dplyr::summarise(x = length(CarniBinom))
-
-temporal.diet <- temporal.diet[!is.na(temporal.diet$Latitude.Centroid.Mean.x),]
-temporal.diet <- temporal.diet[!is.na(temporal.diet$Longitude.Centroid.Mean.x),]
-
-temporal.diet$Latitude.Centroid.Mean.x <- as.numeric(as.character(temporal.diet$Latitude.Centroid.Mean.x))
-temporal.diet$Longitude.Centroid.Mean.x <- as.numeric(as.character(temporal.diet$Longitude.Centroid.Mean.x))
-str(temporal.diet)
-
-temporal.diet %>% filter(Family == "Mephitidae") %>% pull(CarniBinom)
-tib <- as_tibble(temporal.diet)
-show(tib)
-show(temporal.diet)
-
-colnames(temporal.diet)[14:15] <- c("long","lat")
-colnames(tib)[14:15] <- c("long","lat")
-
-levels(temporal.diet$CarniBinom)
-
-# Create spatial points dataframe:
-colnames(temporal.diet)
-
-sp.diet <- SpatialPointsDataFrame(coords = temporal.diet[,c(14,15)],
-                       data = temporal.diet,
-                       proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-
-plot(sp.diet)
-
-sp.diet <- st_as_sf(sp.diet)
-
-to.check <- data.frame()
-
-for(i in 1:length(levels(temporal.diet$CarniBinom))) {
-  
-  spec <- as.character(levels(temporal.diet$CarniBinom)[i])
-  
-  if(spec != "Vampyrum spectrum") {
-  
-  spec.range <- ranges %>% filter(binomial == spec)
-  spec.diet <- sp.diet %>% filter(CarniBinom == spec)
-  
-  ggplot() +
-    geom_sf(data = spec.range) +
-    geom_point(data = spec.diet,
-               aes(x=long,y=lat))
-  
-  # Identify which points fall outside of the species' geographic range...
-  tets <- st_join(spec.diet,
-                  spec.range, by = "geometry")
- 
-  if(is.na(tets$SHAPE_Area) == TRUE){ # Grab those weird coordinates out
-    
-    missing <- as.data.frame(tets[which(is.na(tets$SHAPE_Area)),])
-    
-    to.check <- rbind(to.check, missing)
-    
-  } else {}   # Do nothing 
-  
-  } else {print("nope")} # Do nothing if it's Vampyrum spectrum - no coords for study.
-
-   
-  print(i)
-}
-
-colnames(to.check)
-
-t <- unique(to.check[c(5,14,15,17)])
-
-write.csv(t, "./coords to check_outside of range.csv")
-
-
+# Load potential species list
+# Includes species selected as primary consumers from MammalDIET (Kissling et al., 2014)
+cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/CarniDiet_PotentialSpecies.csv", header = TRUE)
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
 # ---- CarniDIET Metadata ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
-# How many potential species?
-nrow(cd.wos.hits) # 213
-levels(cd.wos.hits$Order) # 9 Orders
-levels(cd.wos.hits$Family) # 23 potential families
+# ---- 1. Carnivore species information ----
 
-# How many species in CarniDIET
-levels(carnidiet$CarniBinom) # 104
-levels(carnidiet$Order) 
-levels(carnidiet$Family) 
+# How many potential ...?
+nrow(cd.wos.hits) # 213 species
+levels(cd.wos.hits$Order) # 9 orders
+levels(cd.wos.hits$Family) # 23 families
 
-# Ages, sex 
-levels(carnidiet$Age)
-levels(carnidiet$Sex)
+# How many ... in CarniDIET
+levels(carnidiet$CarniBinom) # 104 species
+levels(carnidiet$Order) # 5 orders
+levels(carnidiet$Family)  # 15 families
 
-# Food type:
-levels(carnidiet$Food.type)
-levels(carnidiet$PreyOrder)
-levels(carnidiet$PreyFamily)
-nlevels(carnidiet$PreyGenus) - 1
-nlevels(carnidiet$PreySpecies) - 1
-nlevels(carnidiet$PreyBinom) - 1
-nlevels(carnidiet$Common.name) - 1
+# How many levels of:
+levels(carnidiet$Age) # 4 ages/life-stages
+levels(carnidiet$Sex) # Both sexes and both/unknown
 
-levels(carnidiet$TaxonomicPrecision)
+# ---- 2. Diet resolution information -----
 
-range(carnidiet$QuantificationImportance)
+# How many levels for food-type variables:
+# the '-1' accounts for "" entries which could be treated as NA's...
+nlevels(carnidiet$Food.type) - 1 # 16 Food types
+nlevels(carnidiet$PreyOrder) - 1 # 62 prey orders
+nlevels(carnidiet$PreyFamily) - 1 # 130 prey families
+nlevels(carnidiet$PreyGenus) - 1 # 490 prey genera
+nlevels(carnidiet$PreySpecies) - 1 # 735 prey species
+nlevels(carnidiet$PreyBinom) - 1 # 866 prey binomials
+nlevels(carnidiet$Common.name) - 1 # 1649 common names
 
+# Categories of taxonomic precision
+nlevels(carnidiet$TaxonomicPrecision) - 1 # 11 categories of taxonomic precision
 
-str(carnidiet)
-levels(carnidiet$TaxonomicPrecision)
-range(carnidiet[!is.na(carnidiet$Scat.Stomach.Tissue),]$Scat.Stomach.Tissue)
-range(carnidiet[!is.na(carnidiet$Prey.Items.Kill.Sample.Size),]$Prey.Items.Kill.Sample.Size)
+# Range of taxonomic importance
+range(carnidiet$QuantificationImportance) # 0.005% to 100%
 
+# Range of sample sizes used for quantifying diet compositions
+range(carnidiet[!is.na(carnidiet$Scat.Stomach.Tissue),]$Scat.Stomach.Tissue) # 1 to 11,478
+range(carnidiet[!is.na(carnidiet$Prey.Items.Kill.Sample.Size),]$Prey.Items.Kill.Sample.Size) # 1 to 23,824
 
-
-# ---- 1. Temporal information ----
+# ---- 3. Temporal information ----
 
 # Range in study years
 range(carnidiet[!is.na(carnidiet$Start.Year),]$Start.Year) # 1933 to 2017
@@ -308,11 +157,11 @@ levels(factor(carnidiet[!is.na(carnidiet$End.Day),]$End.Day))
 # Seasons - these are pretty crude
 levels(carnidiet$Season)
 
-# ----- 2. Methods information ----
+# ----- 3. Methods information ----
 levels(carnidiet$Method)
 levels(carnidiet$Sample.Source)
 
-# ----- 3. Spatial information -----
+# ----- 4. Spatial information -----
 # Altitude
 range(carnidiet[!is.na(carnidiet$AltitudeMinimum),]$AltitudeMinimum) # 0 - 4543m
 range(carnidiet[!is.na(carnidiet$AltitudeMaximum),]$AltitudeMaximum) # 0 - 8156m
@@ -343,9 +192,8 @@ hist(log10(vec[!is.na(vec)]))
 
 # Spread
 summary(log10(vec[!is.na(vec)]))
-summary(vec[!is.na(vec)]) # Median = 259km2, Mean = 2002km2,
+range(vec[!is.na(vec)]) # 0.03 to 100000km2
 
-levels(carnidiet$Coordinates.Source)
 
 # ---- 4. Bibliographic information ----
 levels(carnidiet$PR.Author)
@@ -358,7 +206,7 @@ levels(carnidiet$Collector)
 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ----  TAXONOMIC RESOLUTION ----
+# ---- CARNIVOROUS MAMMAL DIET COVERAGE  ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # ---- Family representation in dietary studies -----
@@ -377,13 +225,13 @@ family.wos.hits <- cd.wos.hits %>% dplyr::group_by(Family) %>% dplyr::summarize(
 family.wos.hits
 
 # Number of papers included in CarniDIET (by Family)
-family.papers <- carnidiet[c(3,57)]
+family.papers <- carnidiet[c(3,44)]
 family.papers <- unique(family.papers)
 family.papers <- family.papers %>% dplyr::group_by(Family) %>% dplyr::summarise(No.papers = length(Family))
 family.papers
 
 # Median and max of number of studies per species (per Family)
-family.species.papers <- carnidiet[c(3:4,57)]
+family.species.papers <- carnidiet[c(3:4,44)]
 family.species.papers <- unique(family.species.papers)
 family.species.papers <- family.species.papers %>% dplyr::group_by(Family,CarniBinom) %>% dplyr::summarise(studiesperspecies = length(CarniBinom))
 family.species.papers <- family.species.papers %>% dplyr::group_by(Family) %>% dplyr::summarise(median.papers = median(studiesperspecies),
@@ -421,12 +269,12 @@ genus.CD <- genus.CD %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summaris
 genus.wos.hits <- cd.wos.hits %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summarize(No.Hits = sum(WoS.Hits))
 
 # Number of actual papers per genus
-genus.papers <- diet.2[c(3:4,58)]
+genus.papers <- diet.2[c(3:4,45)]
 genus.papers <- unique(genus.papers)
 genus.papers <- genus.papers %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summarise(No.papers = length(Genus_V_1.2))
 
 # Median and max of number of studies per species per Genus
-genus.species.papers <- diet.2[c(3:5,58)]
+genus.species.papers <- diet.2[c(3:5,45)]
 genus.species.papers <- unique(genus.species.papers)
 genus.species.papers <- genus.species.papers %>% dplyr::group_by(Family,Genus_V_1.2,Species) %>% dplyr::summarise(studiesperspecies = length(Species))
 genus.species.papers <- genus.species.papers %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summarise(median.papers = median(studiesperspecies),
