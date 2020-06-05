@@ -1,49 +1,38 @@
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- SCRIPT OVERVIEW ----
-# 
-#   Chapter 3: CarniDIET: establishing a macroecologcal dataset on the diets of Carnivora
 #
-#   The purpose of this script is to summarise the data collected within CarniDIET. This will involve evaluating several
-#   key aspects:-
-#         
-#   - Taxonomic coverage:
-#        > Percentage of species in a Family with at least one dietary study completed
-#        > Geographic range of missing species (which biomes have the most species unstudied?)
-#        > Number of studies per species, highlighting those species which make up the majority of the total studies (50%)
+#  ---- CarniDIET V1.0 ----
 #   
-#   - Spatio-temporal coverage:
-#        > Spatio-temporal coverage (latitude~Years studied) (i.e. PREDICTS)
-#        > Global maps of study distributions
+#   A database on the diets of the world's terrestrial carnivorous mammals
 #   
-#   - Dietary coverage:
-#        > Number of species
-#        > Percentage recorded to different taxonomic resolutions
+#   The purpose of this script is to summarise the data collected within CarniDIET:
+#   
+#   - 1. Metadata: Information for database metadata
+#   
+#   - 2. Carnivorous mammals taxonomic representation:
+#        - Percentage of species in a Family with at least one dietary study completed
+#        - Geographic range of missing species (which biomes have the most species unstudied?)
+#        - Number of studies per species, highlighting those species which make up the majority of the total studies (50%)
+#   
+#   - 3. Spatio-temporal information of studies:
+#        - Spatio-temporal coverage (latitude~Years studied) (i.e. PREDICTS)
+#        - Global maps of study distributions
+#   
+#   - 4. Resolution of dietary composition for carnivorous mammals:
+#        - Number of species
+#        - Percentage recorded to different taxonomic resolutions
 #        
-#   - Methdological information
-#        > Percentage of records made using different methods
+#   - 5. Methodology used to quantify diets:
+#        - Percentage of records made using different methods
 # 
-
-
-#  Terminology:
-# 
-#  WHAT MAKES A PAPER AND A STUDY?
-# 
-#     - Paper: Primary reference from where dietary information was collected.
-#     - Study: Finest coverage of dietary information from a paper (No.Studies from paper => 1 paper)
-#               > Multiple years
-#               > Annual
-#               > Seasonal
-#               > Finer
-#       Note: This is also influenced by the sex/age of the individuals studied in 
-#       the papers (i.e. male/female or adult/juvenile will be split into multiple studies within a paper).
+#     All figures were created in this script for the publication:
 #       
-#   Taxonomy:
+#   A note on taxonomy:
 #   This study will follow the taxonomy of the Phylacine v1.2 database due to the purpose of being built to be a standardised
 #   database for macroecolgoical research on mammals in the Late Quaternary
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- BOOK-KEEPING ----
+# ---- Book keeping ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 #---- Functions ----
 g_legend<-function(a.gplot){
@@ -60,41 +49,18 @@ colours = c("#99CCFF","#3399FF", "#003366", # Blues
             "#9999FF","#9933FF", "#333399") # Purple
 
 #---- Load packages ----
-library(tidyverse)
-library(plyr)
-library(ggrepel)
-library(sp)
-library(sf)
-library(viridis)
-library(rgdal)
-library(rgeos)
-library(maptools)
-library(reshape2)
-library(RColorBrewer)
-library(gridExtra)
-library(grid)
-library(doParallel)
-library(effects)
-library(raster)
-library(cluster)    # clustering algorithms
-library(factoextra) # clustering algorithms & visualization
-library("vegan")
-library(FD)
-library(factoextra)
-library(pscl)
-library(boot)
-library(mapproj)
+library(pacman)
+pacman::p_load(tidyverse,plyr,ggrepel,sp,sf,viridis,rgdal,
+               rgeos,maptools,reshape2,RColorBrewer,gridExtra,
+               grid,doParallel,effects,raster,cluster,factoextra,
+               vegan,FD,factoextra,pscl,boot,mapproj)
 
 #---- Load data ----
-# Load Phylacine - for name standardisation:
-#phylacine <- read.csv("./Data/TraitData/phylacine/Trait_data.csv", header = TRUE)
-
 # Load CarniDIET
 carnidiet <- read.csv("./Version 1.0/CarniDIET 1.0.csv")
-#carnidiet <- carnidiet[c(2:75)]
 
 # Load potential species list
-# Includes species selected as primary consumers from MammalDIET (Kissling et al., 2014)
+# Includes species selected as primary consumers of mammals from MammalDIET (Kissling et al., 2014)
 cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/CarniDiet_PotentialSpecies.csv", header = TRUE)
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
@@ -102,11 +68,6 @@ cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/CarniDiet_PotentialSpe
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # ---- 1. Carnivore species information ----
-
-# How many potential ...?
-nrow(cd.wos.hits) # 213 species
-levels(cd.wos.hits$Order) # 9 orders
-levels(cd.wos.hits$Family) # 23 families
 
 # How many ... in CarniDIET
 levels(carnidiet$CarniBinom) # 104 species
@@ -206,8 +167,13 @@ levels(carnidiet$Collector)
 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- CARNIVOROUS MAMMAL DIET COVERAGE  ----
+# ---- Carnivore taxonomy represented  ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
+
+# How many potential ...?
+nrow(cd.wos.hits) # 213 species
+levels(cd.wos.hits$Order) # 9 orders
+levels(cd.wos.hits$Family) # 23 families
 
 # ---- Family representation in dietary studies -----
 # Number of POTENTIAL species in CarniDIET (by family)
@@ -290,7 +256,7 @@ genus.info <- genus.info[c(1:3,5:6,8,10,11,13:14)]
 genus.info[is.na(genus.info)] <- 0
 genus.info
 
-# ---- Table: Family & genus level representation in dietary studies ----
+# ---- Tables: Family & genus level representation in dietary studies ----
 write.csv(family.info, "./Results/Tables/Family.Information.Summary_UPDATE.csv")
 write.csv(genus.info, "./Results/Tables/Genus.Information.Summary_UPDATE.csv")
 
@@ -363,137 +329,6 @@ c1 = y - (1*x)
 ggsave(filename = paste0("./Results/Figures/PercentFamiliesStudied.tiff"), plot = plot, device = NULL, path = NULL,
        scale = 1, width = 10.5, height = 10.5, units = c("cm"),
        dpi = 300)
-
-# ---- Figure: Where are potential, but missing, species located? ----
-# This section produces a map of the potential species richness of a cell which have not been studied.
-
-# Load Phylacine species range rasters 
-current.range.full <- read.csv("./Data/GIS/Phylacine ranges/Current_Species_Matrix.csv", header = TRUE)
-
-# Potential species richness
-# First, which species do not match those in phylacine range data
-which(!levels(cd.wos.hits$Bin.) %in% colnames(current.range.full[c(9:5839)]))
-
-carnivore.potential <- which(colnames(current.range.full[c(9:5839)]) %in% cd.wos.hits$Bin.)
-potential.range.full <- cbind(current.range.full[c(1:8)],current.range.full[c(9:5839)][c(carnivore.potential)])
-
-pixel.id <- potential.range.full[c(2:8)]
-species.ranges <- as.matrix(potential.range.full[c(9:212)])
-species.richness <- rowSums(species.ranges)
-
-row.names(species.ranges) <- paste0("comm",1:51120)
-
-test <- melt(species.ranges)
-colnames(test)[1] <- "Community"
-
-# Merge to get pixel information for all communities in the melted dataframe
-potential.range.full <- merge(test,pixel.id, by.y = "Community") # This may take some time
-
-# Group by community to get species richness per cell
-potential.SR <- potential.range.full %>% dplyr::group_by(Community,x,y) %>% dplyr::summarise(SR = sum(value))
-potential.SR <- merge(potential.SR, pixel.id, by = "Community")
-
-# Actual species richness
-carnivore.actual <- which(colnames(current.range.full[c(9:5839)]) %in% levels(carnidiet$CarniBinom))
-actual.range.full <- cbind(current.range.full[c(1:8)],current.range.full[c(9:5839)][c(carnivore.actual)])
-
-pixel.id <- actual.range.full[c(2:8)]
-species.ranges <- as.matrix(actual.range.full[c(9:112)])
-
-row.names(species.ranges) <- paste0("comm",1:51120)
-test <- melt(species.ranges)
-colnames(test)[1] <- "Community"
-
-# Merge to get pixel information for all communities in the melted dataframe
-actual.range.full <- merge(test,pixel.id, by.y = "Community") # This will also likely take some time
-
-# Group by community to get species richness per cell
-actual.SR <- actual.range.full %>% dplyr::group_by(Community,x,y) %>% dplyr::summarise(SR = sum(value))
-actual.SR <- merge(actual.SR, pixel.id, by = "Community")
-
-# Calculate species richness of species not studied
-deficit.SR <- actual.SR
-deficit.SR$SR <- potential.SR$SR - actual.SR$SR
-
-potential.SR$data <- "Potential"
-actual.SR$data <- "Actual"
-deficit.SR$data <- "Deficit"
-
-# Merge all for facet'ing
-all.Sr <- rbind(potential.SR,actual.SR, deficit.SR)
-
-# Load in biomes using the sf package
-biomes <- st_read("./Data/GIS/ecoregions_biomes/biomes/global_biomes_behrmann.shp")
-
-# Plot this
-(deficit <- ggplot() +
-  geom_raster(data = deficit.SR[!is.na(deficit.SR$Continent),], aes(x = x.x, y = y.y, fill = SR)) +
-  geom_sf(data = biomes, fill = NA, colour = "black") +
-  scale_fill_viridis(option = "inferno", name = "SR",
-                     limits = c(0,10), breaks = c(0, 2, 4, 6, 8, 10)) + 
-  #facet_wrap(.~data, ncol = 1) +
-  theme_bw() + xlab("") + ylab("") + 
-  theme(legend.position = "right") +
-  guides(fill = guide_colourbar(barwidth = .5)) +
-  theme(panel.grid.minor = element_blank(),
-        panel.border = element_blank()))
-
-# Save this plot 
-ggsave(filename = paste0("./Results/Figures/Species richnes not studied_UPDATED.tiff"), plot = deficit, device = NULL, path = NULL,
-       scale = 1, width = 20, height = 10, units = c("cm"),
-       dpi = 200)
-
-# ---- Figure: Bias by conservation status? ----
-colnames(carnidiet)
-x <- carnidiet[c(3,4,57)]
-x <- unique(x)
-
-species.included.paper <- x %>% dplyr::group_by(Family,CarniBinom) %>% dplyr::summarise(papers = length(CarniBinom))
-colnames(species.included.paper)[2] <- "Bin."
-species.included.paper$inclusion <- "Included"
-y <- merge(species.included.paper, cd.wos.hits[c(7,10)], by = "Bin.", all = TRUE)
-y <- y[c(5,1,3,4)]
-y$papers[is.na(y$papers)] <- 0
-y$inclusion[is.na(y$inclusion)] <- "NotIncluded"
-
-colnames(y)[2] <- "CarniBinom"
-
-# Merge ICUN statuses to new datasets
-colnames(phylacine)[1] <- "CarniBinom"
-y <- merge(y, phylacine[c(1,18)])
-
-# find length of species included/not included
-nrow(y[y$inclusion == "Included",])
-nrow(y[y$inclusion == "NotIncluded",])
-
-# Sum by IUCN status
-pred.iucn.summary <- y %>% dplyr::group_by(inclusion, IUCN.Status.1.2) %>% dplyr::summarise(species = length(CarniBinom))
-
-# Make species missing minus
-x <- pred.iucn.summary[pred.iucn.summary$inclusion == "NotIncluded",]
-x$perc <- (x$species/sum(x$species))*100
-x$species = -(x$species)
-x$perc = -(x$perc)
-y <- pred.iucn.summary[pred.iucn.summary$inclusion == "Included",]
-y$perc <- (y$species/sum(y$species))*100
-pred.iucn.summary <- rbind(x,y)
-
-pred.iucn.summary$IUCN.Status.1.2 <- ordered(pred.iucn.summary$IUCN.Status.1.2, levels = c("DD","CR","EN",
-                                                                                           "VU","NT","LC"))
-(iucn.plot <- ggplot(pred.iucn.summary[!is.na(pred.iucn.summary$IUCN.Status.1.2),], aes(x = IUCN.Status.1.2, y = perc, fill = inclusion)) +
-  geom_bar(stat = "identity") + theme_bw() + coord_flip() +
-  scale_fill_manual(values = c("#000000","#666666"), guide = "none") + ylab("Number of species (%)") +
-  xlab("IUCN Red List Category") + 
-  geom_hline(yintercept = 0, linetype = 2, colour = "#CCCCCC") +
-  annotate("text",x = "DD", y = -40, label = "Absent", size = 5, colour = "#666666") +
-  annotate("text",x = "DD", y = 40, label = "Present", size = 5, colour = "#000000") +
-  scale_y_continuous(limits = c(-80,80),
-                     breaks = c(-80, -60, -40, -20, 0 , 20, 40, 60, 80),
-                     label = c("80","60", "40", "20", "0", "20", "40", "60", "80")))
-
-ggsave(filename = paste0("./Results/Figures/IUCN Categories missed and present.tiff"), plot = iucn.plot, device = NULL, path = NULL,
-       scale = 1, width = 10, height = 10, units = c("cm"),
-       dpi = 200)
 
 # ---- Figure: Best represented species in database ----
 # How many papers are there?
@@ -697,7 +532,7 @@ ggsave("./Results/Figures/Final figures/Figure 1/Phylo tree.pdf", p,
 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- || SPATIAL AND TEMPORAL DISTRIBUTION OF DIETARY STUDIES||  ----
+# ---- Spatio-temporal distribution of dietary studies ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # ---- Summarising data ----
@@ -731,7 +566,7 @@ max(temporal.diet[!is.na(temporal.diet$End.Year),]$End.Year)
 2017-1933 # 84 years
 
 
-# ---- Figure: Distribution of data in time and space ----
+# ---- Figure: Spatio-temporal distribution ----
 
 # Find median and IQR for study latitude and year
 mid.year <- temporal.diet$Mid.Year
@@ -873,7 +708,7 @@ quantile(y$End.Year - y$Start.Year)
 table(temporal.diet$Season)
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- || DIET RESOLUTION || ----
+# ---- Diet resolution ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # ---- Summarising data ----
