@@ -2,7 +2,7 @@
 The curiosity of humanity, and scientists specifically, with the natural world has resulted in a surplus of data spread throughout the literature and various archives. Compiling such  data in a standardised way for us in future research and conservation is vital for ensuring these valuable resources of knowledge are continued to be used in the future.
 
 # Our aim?
-To collate such widespread data for the purpose of conservation, and to  act as a central database for storing quantitative data on the dietary composition of terrestrial carnivores from (mostly) peer-reviewed scientific papers. However, in the future we aim to build on this to incorporate (1) more species, and (2) from more types of sources.
+To collate such widespread data for the purpose of conservation, and to  act as a central database for storing quantitative data on the dietary composition of terrestrial carnivores from a variety of sources (although Version 1.0 currently consists primarily of peer-reviewed scientific papers). However, in the future we aim to build on this to incorporate (1) more species and (2) from more types of sources.
 
 As with any form of data collection, we are aware there will be likely errors within  the database. To ensure we build an accurate and precise database that best reflects reported data from the primary sources, we encourage users to keep note of any transcription errors that occurred in the database and update us by contacting Owen Middleton. 
 
