@@ -53,7 +53,10 @@ library(pacman)
 pacman::p_load(tidyverse,plyr,ggrepel,sp,sf,viridis,rgdal,
                rgeos,maptools,reshape2,RColorBrewer,gridExtra,
                grid,doParallel,effects,raster,cluster,factoextra,
-               vegan,FD,factoextra,pscl,boot,mapproj)
+               vegan,FD,factoextra,pscl,boot,mapproj,ggplot2, dplyr,
+               stringr, gridExtra,viridisLite,raster,rgdal,maptools,
+               ape, ggtree,ggpubr, update = F)
+
 
 #---- Load data ----
 # Load CarniDIET
@@ -63,6 +66,9 @@ carnidiet <- read.csv("./Version 1.0/CarniDIET 1.0.csv")
 # Includes species selected as primary consumers of mammals from MammalDIET (Kissling et al., 2014)
 cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/CarniDiet_PotentialSpecies.csv", header = TRUE)
 
+# Phylacine 
+phylacine <- read.csv("../Phylacine/Trait_data.csv")
+
 #————————————————————————————————————————————————————————————————————————————————————————————####
 # ---- CarniDIET Metadata ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
@@ -70,30 +76,34 @@ cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/CarniDiet_PotentialSpe
 # ---- 1. Carnivore species information ----
 
 # How many ... in CarniDIET
-levels(carnidiet$CarniBinom) # 104 species
-levels(carnidiet$Order) # 5 orders
-levels(carnidiet$Family)  # 15 families
+nlevels(carnidiet$CarniBinom) # 104 species
+nlevels(carnidiet$Order) # 5 orders
+nlevels(carnidiet$Family)  # 15 families
 
 # How many levels of:
-levels(carnidiet$Age) # 4 ages/life-stages
-levels(carnidiet$Sex) # Both sexes and both/unknown
+nlevels(carnidiet$Age) # 4 ages/life-stages
+nlevels(carnidiet$Sex) # Both sexes and both/unknown
 
 # ---- 2. Diet resolution information -----
 
 # How many levels for food-type variables:
 # the '-1' accounts for "" entries which could be treated as NA's...
-nlevels(carnidiet$Food.type) - 1 # 16 Food types
-nlevels(carnidiet$PreyOrder) - 1 # 62 prey orders
-nlevels(carnidiet$PreyFamily) - 1 # 130 prey families
-nlevels(carnidiet$PreyGenus) - 1 # 490 prey genera
-nlevels(carnidiet$PreySpecies) - 1 # 735 prey species
-nlevels(carnidiet$PreyBinom) - 1 # 866 prey binomials
-nlevels(carnidiet$Common.name) - 1 # 1649 common names
+levels(carnidiet$Food.type) # 16 Food types
+levels(carnidiet$PreyOrder) # 62 prey orders
+levels(carnidiet$PreyFamily) # 130 prey families
+levels(carnidiet$PreyGenus) # 490 prey genera
+levels(carnidiet$PreySpecies) # 734 prey species
+levels(carnidiet$PreyBinom) # 854 prey binomials
+levels(carnidiet$Common.name) # 1649 common names
+
+# How many domestic animals
+dom <- carnidiet %>% filter(Domestic.Agricultural == 1) %>% droplevels()
+levels(dom$PreyBinom)
 
 # Categories of taxonomic precision
-nlevels(carnidiet$TaxonomicPrecision) - 1 # 11 categories of taxonomic precision
+levels(carnidiet$TaxonomicPrecision) # 11 categories of taxonomic precision
 
-# Range of taxonomic importance
+# Range of quantitative importance of prey species or food type
 range(carnidiet$QuantificationImportance) # 0.005% to 100%
 
 # Range of sample sizes used for quantifying diet compositions
@@ -116,13 +126,13 @@ levels(factor(carnidiet[!is.na(carnidiet$Start.Day),]$Start.Day))
 levels(factor(carnidiet[!is.na(carnidiet$End.Day),]$End.Day))
 
 # Seasons - these are pretty crude
-levels(carnidiet$Season)
+levels(carnidiet$Season) # 56 seasons
 
-# ----- 3. Methods information ----
-levels(carnidiet$Method)
-levels(carnidiet$Sample.Source)
+# ----- 4. Methods information ----
+levels(carnidiet$Method) # 10 quantification methods
+levels(carnidiet$Sample.Source) # 20 Diet Sample Origins
 
-# ----- 4. Spatial information -----
+# ----- 5. Spatial information -----
 # Altitude
 range(carnidiet[!is.na(carnidiet$AltitudeMinimum),]$AltitudeMinimum) # 0 - 4543m
 range(carnidiet[!is.na(carnidiet$AltitudeMaximum),]$AltitudeMaximum) # 0 - 8156m
@@ -130,7 +140,7 @@ range(carnidiet[!is.na(carnidiet$AltitudeMaximum),]$AltitudeMaximum) # 0 - 8156m
 # Latitude and longitude
 range(carnidiet[!is.na(carnidiet$Latitude.Centroid.Mean.x),]$Latitude.Centroid.Mean.x) # -55S to 81N
 range(carnidiet[!is.na(carnidiet$Longitude.Centroid.Mean.x),]$Longitude.Centroid.Mean.x) # -169W to 178E
-levels(carnidiet$Coordinates.Source) # Some extra ones
+levels(carnidiet$Coordinates.Source) # 4 Types of geo-referencing
 
 # Descriptions of study area
 levels(carnidiet$SiteName) # 791 sites
@@ -138,36 +148,20 @@ levels(carnidiet$Region) # 410 Regions
 levels(carnidiet$Country) # 107 "countries"
 
 # Range of study area size
-levels(carnidiet$Study.Area.Size.km2)
-
-# Remove descriptive study area sizes
-study.area <- carnidiet %>%
-  filter(!Study.Area.Size.km2 %in% c("50km radius",
-                                   "50 - 100",
-                                   "3km radius")) %>% 
-  droplevels()
-# Convert to numeric
-vec <- unique(as.numeric(as.character(study.area[!is.na(study.area$Study.Area.Size.km2),]$Study.Area.Size.km2)))
-# Distribution on log scale
-hist(log10(vec[!is.na(vec)]))
-
-# Spread
-summary(log10(vec[!is.na(vec)]))
-range(vec[!is.na(vec)]) # 0.03 to 100000km2
+carnidiet$Study.Area.Size.km2 <- as.numeric(as.character(carnidiet$Study.Area.Size.km2))
+range(carnidiet[!is.na(carnidiet$Study.Area.Size.km2),]$Study.Area.Size.km2) # 0.03 to 100,000km2
 
 
-# ---- 4. Bibliographic information ----
-levels(carnidiet$PR.Author)
-range(carnidiet$PR.Year)
-levels(carnidiet$PR.Title)
-levels(carnidiet$PR.Journal)
-levels(carnidiet$PrimaryRef)
-levels(carnidiet$CollectionRef)
-levels(carnidiet$Collector)
-
+# ---- 6. Bibliographic information ----
+levels(carnidiet$PR.Author) # 638
+range(carnidiet$PR.Year) # 1952 to 2019
+levels(carnidiet$PR.Title) # 749 titles of studies
+levels(carnidiet$PR.Journal) # 208 Journals
+levels(carnidiet$PrimaryRef) # 749 sources
+levels(carnidiet$CollectionRef) # 683 Collection Refs
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- Carnivore taxonomy represented  ----
+# ---- Taxonomy represented  ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # How many potential ...?
@@ -175,7 +169,7 @@ nrow(cd.wos.hits) # 213 species
 levels(cd.wos.hits$Order) # 9 orders
 levels(cd.wos.hits$Family) # 23 families
 
-# ---- Family representation in dietary studies -----
+# ---- Family representation in diet sources -----
 # Number of POTENTIAL species in CarniDIET (by family)
 family.species <- cd.wos.hits %>% dplyr::group_by(Family) %>% dplyr::summarize(No.Species = length(Family))
 family.species
@@ -190,19 +184,18 @@ family.CD
 family.wos.hits <- cd.wos.hits %>% dplyr::group_by(Family) %>% dplyr::summarize(No.Hits = sum(WoS.Hits))
 family.wos.hits
 
-# Number of papers included in CarniDIET (by Family)
+# Number of sources included in CarniDIET (by Family)
 family.papers <- carnidiet[c(3,44)]
 family.papers <- unique(family.papers)
 family.papers <- family.papers %>% dplyr::group_by(Family) %>% dplyr::summarise(No.papers = length(Family))
 family.papers
 
-# Median and max of number of studies per species (per Family)
+# Median and max of number of sources per species (per Family)
 family.species.papers <- carnidiet[c(3:4,44)]
 family.species.papers <- unique(family.species.papers)
 family.species.papers <- family.species.papers %>% dplyr::group_by(Family,CarniBinom) %>% dplyr::summarise(studiesperspecies = length(CarniBinom))
-family.species.papers <- family.species.papers %>% dplyr::group_by(Family) %>% dplyr::summarise(median.papers = median(studiesperspecies),
-                                                                                                max.papers = max(studiesperspecies))
-family.species.papers
+(family.species.papers <- family.species.papers %>% dplyr::group_by(Family) %>% dplyr::summarise(median.papers = median(studiesperspecies),
+                                                                                                max.papers = max(studiesperspecies)))
 
 # Building Family-level table
 family.info <- merge(family.species,family.CD, by = "Family", all = TRUE)
@@ -212,14 +205,23 @@ family.info <- merge(family.info, family.papers, by = "Family", all = TRUE)
 family.info$Hits_Papers_Ratio <- (family.info$No.papers/family.info$No.Hits)*100
 family.info <- merge(family.info, family.species.papers, by = "Family", all = TRUE)
 family.info[is.na(family.info)] <- 0
-family.info
 
-# How many papers were used compared to actual hits?
+# How many sources were used compared to actual hits?
 sum(family.info$No.Hits)
 sum(family.info$No.papers)
 median(family.info$Hits_Papers_Ratio)
 
-# ---- Genus representation in dietary studies -----
+# Merge in Order information
+colnames(phylacine)
+order.family <- unique(phylacine[c(2,3)])
+colnames(order.family) <- c("Order", "Family")
+
+family.info <- merge(family.info,order.family, by = "Family", all.x = TRUE)
+family.info <- family.info[c(10,1:9)]
+
+family.info <- family.info %>% arrange(Order, Family)
+
+# ---- Genus representation in diet sources -----
 # Number of potential species in each genus
 genus.species <- cd.wos.hits %>% dplyr::group_by(Family, Genus_V_1.2) %>%
               dplyr::summarize(No.Species = length(Genus_V_1.2))
@@ -234,12 +236,12 @@ genus.CD <- genus.CD %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summaris
 # Number of hits per genus
 genus.wos.hits <- cd.wos.hits %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summarize(No.Hits = sum(WoS.Hits))
 
-# Number of actual papers per genus
+# Number of actual sources per genus
 genus.papers <- diet.2[c(3:4,45)]
 genus.papers <- unique(genus.papers)
 genus.papers <- genus.papers %>% dplyr::group_by(Family,Genus_V_1.2) %>% dplyr::summarise(No.papers = length(Genus_V_1.2))
 
-# Median and max of number of studies per species per Genus
+# Median and max of number of sources per species per Genus
 genus.species.papers <- diet.2[c(3:5,45)]
 genus.species.papers <- unique(genus.species.papers)
 genus.species.papers <- genus.species.papers %>% dplyr::group_by(Family,Genus_V_1.2,Species) %>% dplyr::summarise(studiesperspecies = length(Species))
@@ -254,54 +256,48 @@ genus.info$Hits_Papers_Ratio <- (genus.info$No.papers/genus.info$No.Hits)*100
 genus.info <- merge(genus.info, genus.species.papers, by = "Genus_V_1.2", all = TRUE)
 genus.info <- genus.info[c(1:3,5:6,8,10,11,13:14)]
 genus.info[is.na(genus.info)] <- 0
-genus.info
+colnames(genus.info)[2] <- "Family"
+genus.info <- merge(genus.info, order.family, by = "Family", all.x = TRUE)
+genus.info <- genus.info[c(11,1:10)]
+
+genus.info <- genus.info %>% arrange(Order, Family, Genus_V_1.2)
 
 # ---- Tables: Family & genus level representation in dietary studies ----
-write.csv(family.info, "./Results/Tables/Family.Information.Summary_UPDATE.csv")
-write.csv(genus.info, "./Results/Tables/Genus.Information.Summary_UPDATE.csv")
+write.csv(family.info, "../Tables/Family.Information.Summary_UPDATE.csv")
+write.csv(genus.info, "../Tables/Genus.Information.Summary_UPDATE.csv")
 
-# ---- Figure: Family-level dietary representation ----
-# Family info
-# Find 75%,50%,25,10% slopes
-# line: y = mx + c
-# m = (y2 - y1/x2 - x1)
+# ---- Supplementary figure: Scatterplot family-level diet representation ----
 
+# Get diagonal representation lines for plot
 # 75%
 y = log10(7.5) # Species included 0.8750613
 x = log10(10) # Total species 1
-
 c75 = y - (1*x)
 
 # 50%
 y = log10(5) # Species included 0.8750613
 x = log10(10) # Total species 1
-
 c50 = y - (1*x)
 
 # 25%
 y = log10(2.5) # Species included 0.8750613
 x = log10(10) # Total species 1
-
 c25 = y - (1*x)
 
 # 10%
 y = log10(1) # Species included 0.8750613
 x = log10(10) # Total species 1
-
 c10 = y - (1*x)
 
 # 5%
 y = log10(0.5) # Species included 0.8750613
 x = log10(10) # Total species 1
-
 c5 = y - (1*x)
 
 # 1%
 y = log10(0.1) # Species included 0.8750613
 x = log10(10) # Total species 1
-
 c1 = y - (1*x)
-
 
 (plot <- ggplot(data = family.info[!family.info$Perc.Families == 0,], aes(x = log10(No.Species.x), y = log10(No.Species.y), # Removed species with no studies
                                                                 fill = Family, size = log10(No.papers)), label = Family) +
@@ -324,83 +320,75 @@ c1 = y - (1*x)
     ylab("log10(number of mammal-consumers with diet study)") +
   theme(legend.position = "none",
         panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()))
+        panel.grid.minor = element_blank(),
+        axis.title = element_text(size = 9)))
 
-ggsave(filename = paste0("./Results/Figures/PercentFamiliesStudied.tiff"), plot = plot, device = NULL, path = NULL,
+# Save figure
+ggsave(filename = paste0("../Final figures/Figure S1/PercentFamiliesStudiedUpdated.tiff"), plot = plot, device = NULL, path = NULL,
        scale = 1, width = 10.5, height = 10.5, units = c("cm"),
        dpi = 300)
 
-# ---- Figure: Best represented species in database ----
-# How many papers are there?
-nlevels(carnidiet$PrimaryRef) # 749 primary references
 
-# Get the number of papers focussing on a species
+
+# Supplementary figure: Barplot for top-20 studied species in database ----
+
+# There are 749 sources used. How many feature specific species?
+# There are 3160 unique studies. How many are for specific species?
+
+# Number of sources feature each species
 carnivore.summary <- carnidiet %>%
                      dplyr::group_by(Family, CarniBinom) %>%
-                     dplyr::summarise(papers = length(unique(PrimaryRef))) # Number of papers
+                     dplyr::summarise(papers = length(unique(PrimaryRef)))
  
-# Number of studies
+# Number of studies feature each species
 carnivore.summary.2 <- carnidiet %>% 
-                       dplyr::group_by(Family, CarniBinom, Age, Sex, Scat.Stomach.Tissue,Prey.Items.Kill.Sample.Size,
-                                       PR.Title, Country, Region, SiteName, AltitudeMaximum,
-                                       Start.Year,End.Year, Start.Month,End.Month, Season, Sample.Source, Method, ECO_NAME,
-                                       BIOME, Latitude.Centroid.Mean.x, Longitude.Centroid.Mean.x) %>% 
+                       dplyr::group_by(Family, CarniBinom, Age, Sex, # Unique species and demography
+                                       Scat.Stomach.Tissue,Prey.Items.Kill.Sample.Size, # Unique methods
+                                       Sample.Source, Method, 
+                                       Country, Region, SiteName, AltitudeMaximum, # Unique spatial information
+                                       Latitude.Centroid.Mean.x, Longitude.Centroid.Mean.x,
+                                       Start.Year,End.Year, Start.Month,End.Month, Season, # Unique temporal information
+                                       PR.Title) %>%  # Unique source
                        dplyr::summarise(x = length(CarniBinom))
 
 carnivore.summary.3 <- carnivore.summary.2 %>%
   dplyr::group_by(Family, CarniBinom) %>%
-  dplyr::summarise(studies = length(CarniBinom)) # Number of papers
+  dplyr::summarise(studies = length(CarniBinom)) # Number of studies
 
 carnivore.summary.master <- merge(carnivore.summary, carnivore.summary.3, by = "CarniBinom")
 
 # How many studies are there
-sum(carnivore.summary.master$papers) # 950 - although this includes papers with multiple carnivores
-length(unique(carnidiet$PrimaryRef)) # 749 - This is individual papers
+sum(carnivore.summary.master$papers) # 950, unique combinations of sources and carnivore
+length(unique(carnidiet$PrimaryRef)) # 749, unique sources
 
 # How many studies are there
-sum(carnivore.summary.master$studies) # 3161 - This is all individual studies
+sum(carnivore.summary.master$studies) # 3160 - This is all individual studies
+3160/749 # On average, there are 4 studies per source
 
-3161/749 # On average, there are 4 studies per paper
+# 475 papers = 50% source
+# 713 = 75% source
 
-# 475 papers = 50% papers
-# 713 = 75% papers
-
-#---- Figure: Phylogenetic tree and number of studies per species ----
-
-# 1. Histogram of studies per species
-(hist <- ggplot(data = carnivore.summary.master, aes(x = log10(studies))) +
-  geom_histogram(binwidth = 0.2, colour = "black", fill = "lightgrey") +
-  scale_x_continuous(labels = c("0" = "1",
-                                "1" = "10",
-                                "2" = "100",
-                                "3" = "1000")) +
-  labs(x = "Number of studies", y = "Number of species") +
-  theme_bw() +
-  theme(panel.grid = element_blank()))
-
-ggsave("./Results/Figures/Final figures/Figure 1/Histogram.pdf", hist,
-       width = 2, height = 2, units = "in")
-
-# Quickly make master figure for the top 20 species
+# Tidy table
 colnames(carnivore.summary.master)[1] <- "CarniBinom"
-carnivore.summary.master$CarniBinom <- reorder(carnivore.summary.master$CarniBinom, carnivore.summary.master$studies)
 
+# Get top-20 species
+carnivore.summary.master$CarniBinom <- reorder(carnivore.summary.master$CarniBinom, carnivore.summary.master$studies)
 x <- carnivore.summary.master[order(carnivore.summary.master$studies, decreasing = TRUE),]
 y <- x[1:20,]
 y$CarniBinom <- factor(y$CarniBinom)
 levels(y$CarniBinom)
 
-
 # How many species need to be included to get 50% of the studies?
-(sum(x[1:9,]$studies)/3161)*100 #  9 species includes just over 50% studies
-(sum(x[1:24,]$studies)/3161)*100 # 24 species includes 75% studies
+(sum(x[1:9,]$studies)/3159)*100 #  9 species includes just over 50% studies
+(sum(x[1:20,]$studies)/3159)*100 # 20 species includes 70% studies
+(sum(x[1:24,]$studies)/3159)*100 # 24 species includes almost 75% studies
 
 # Find percentage lines
-(sum(x[1:1,]$studies)/3161)*100 # 14.8% studies
-(sum(x[1:5,]$studies)/3161)*100 # 40.5% studies
-(sum(x[1:10,]$studies)/3161)*100 # 62.9% studies
+(sum(x[1:1,]$studies)/3159)*100 # 14.8% studies
+(sum(x[1:6,]$studies)/3159)*100 # 40.5% studies
+(sum(x[1:10,]$studies)/3159)*100 # 52.9% studies
 
-# Rename factor levels to make a nicer figure.
+# Rename species factor levels for figure
 y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes","Lynx_lynx" = "L. lynx",
                                         "Canis_lupus" = "C. lupus","Felis_silvestris" = "F. silvestris",
                                         "Panthera_pardus" = "P. pardus","Neovison_vison" = "N. vison",
@@ -410,9 +398,10 @@ y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes","Lynx_lynx
                                         "Martes_martes" = "M. martes","Mustela_erminea" = "M. erminea",
                                         "Panthera_tigris" = "P. tigris","Panthera_uncia" = "P. uncia",
                                         "Martes_americana" = "M. americana","Lynx_rufus" = "L. rufus",
-                                        "Martes_pennanti" = "M. pennanti","Crocuta_crocuta" = "C. crocuta"))
+                                        "Canis_mesomelas" = "C. mesomelas","Panthera_onca" = "P. onca"))
 
 
+# Main plot
 (p10 <- ggplot(data = y[1:20,], aes(x = reorder(CarniBinom, studies), y = studies, fill = papers)) + # 20 species refers to 66% all papers
   geom_bar(stat = "identity") +
   #annotate("rect", xmin = 19.5, xmax = 20.5, ymin = -Inf, ymax =Inf, fill = "red") +
@@ -420,7 +409,7 @@ y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes","Lynx_lynx
   #annotate("rect", xmin = 7.5, xmax = 15.5, ymin = -Inf, ymax =Inf, fill = "yellow") +
   coord_flip() +
   xlab("") + ylab("Number of studies") +
-  scale_fill_gradient(low = "lightgrey", high = "black", name = "Papers") +
+  scale_fill_gradient(low = "lightgrey", high = "black", name = "Sources") +
   theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   geom_vline(xintercept = 19.5, colour = "black", linetype = 2, alpha = 0.8) + # 10% studies
   geom_vline(xintercept = 14.5, colour = "black", linetype = 2, alpha = 0.8) + # 30% studies
@@ -428,32 +417,138 @@ y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes","Lynx_lynx
   annotate("text", x = 19, y = 380, label = "10%", size = 3) +
   annotate("text", x = 14, y = 380, label = "30%", size = 3) +
   annotate("text", x = 5, y = 380, label = "50%", size = 3) +
-  ylim(0,400) + theme(axis.text.y = element_text(face = "italic")))
+  ylim(0,500) + theme(axis.text.y = element_text(face = "italic")))
 
-ggsave(filename = paste0("./Results/Figures/Primary species in dataset.tiff"), plot = p10, device = NULL, path = NULL,
+# Save plot
+ggsave(filename = paste0("../Final figures/Figure S2/Top-20 studied species.tiff"), plot = p10, device = NULL, path = NULL,
        scale = 1, width = 12, height = 12, units = c("cm"),
        dpi = 200)
 
-pacman::p_load(ggplot2,
-               dplyr,
-               stringr,
-               gridExtra,
-               viridisLite,
-               raster,
-               rgdal,
-               maptools,
-               ape,
-               ggtree, update = F)
 
 
-forest <- read.nexus("./Data/Phylogenies/Complete_phylogeny.nex")
+# Figure: Phylogenetic tree and number of studies per species ----
+
+# Download phylogeny from PHYLACINE
+# Save  phylogeny in  repository behind the one with this project
+forest <- read.nexus("../Phylogenies/Complete_phylogeny.nex")
 names(forest) <- NULL
 set.seed(42)
 forest <- forest[sample(1:1000, 30)]
 
-# I will be colouring by number of papers
-# Current species list
-sp <- carnivore.summary.master$Binomial.1.2
+# Species list in CarniDIET
+(sp <- levels(carnivore.summary.master$CarniBinom))
+
+# Trim tree down to CarniDIET species list
+pruned.forest <- lapply(forest, 
+                        function(x) {
+                          drop.tip(x, x$tip.label[!x$tip.label %in% sp])
+                        }
+)
+class(pruned.forest) <- "multiPhylo"
+
+# Pick a single tree for overplotting and labelling
+tree <- pruned.forest[1]
+plot(tree)
+summary(tree)
+
+# Turn tree to dataframe
+tree <- fortify(tree)
+
+# Change columns name in carnivore summary to match Phylacine
+colnames(carnivore.summary.master)[1] <- "Binomial.1.2"
+
+# Add number of studies to the tree
+tree <- left_join(tree, carnivore.summary.master, by = c("label" = "Binomial.1.2"))
+
+# Reverse age scale
+tree$x <- tree$x - max(tree$x)
+
+# Convert multiPhylo to data.frame
+#pruned.forest <- fortify(pruned.forest)
+
+# Reverse ages to show time BP
+#pruned.forest$x <- pruned.forest$x - max(pruned.forest$x)
+
+# Create new name binomial names
+foo <- data.frame(do.call('rbind', strsplit(as.character(tree$label),'_',fixed=TRUE)))
+tree$Genus <- substring(foo$X1,1,1)
+tree$Species <- foo$X2
+tree$label2 <- paste(tree$Genus, tree$Species, sep = ". ")
+
+# What happens if you change the branch length?
+tree$branch.length <- tree$branch.length/2
+
+# Update colour scheme
+colours <- c("#CCCCCC","#99CC00","#999999","#339900","#CC9900","#FFCC00","#FF6600","#993300",
+             "#FFCCCC","#CC6699","#FF99FF","#663399","#9999CC","#3399FF","#CCFFFF","#003333")
+
+# Plot phylogeny
+(p <- ggtree(tree, layout='circular', ladderize = FALSE) +
+    geom_tiplab(size=1.5, aes(label = label2, parse = T, size= 3.5, angle=angle), offset = 10) +
+    geom_tippoint(aes(x, y, fill = Family.x, size = studies), pch = 21, colour = "black", alpha = 0.75) +
+    scale_fill_manual(values = colours) +
+    #xlim(-160, 30) +
+    theme(panel.background = element_blank(),
+          legend.position = "none"))
+
+# Save phylogenetic tree
+ggsave("../Final figures/Figure 2/Phylo tree.pdf", p,
+       width = 4, height = 4, units = "in")
+
+
+
+# Histogram of studies per species
+(hist <- ggplot(data = carnivore.summary.master, aes(x = log10(studies))) +
+    geom_histogram(binwidth = 0.2, colour = "black", fill = "lightgrey", alpha = 0.5) +
+    scale_x_continuous(labels = c("0" = "1",
+                                  "1" = "10",
+                                  "2" = "100",
+                                  "3" = "1000")) +
+    labs(x = "Number of studies", y = "Number of species") +
+    coord_flip() +
+    theme_bw() +
+    theme(panel.grid = element_blank()))
+
+# Save plot
+ggsave("../Final figures/Figure 2/Histogram.pdf", hist,
+       width = 2, height = 2, units = "in")
+
+# Alternative: Barplot showing decline in studies and coloured by family
+
+(barplot <- ggplot(data = carnivore.summary.master, aes(x = reorder(Binomial.1.2, -studies),
+                                                        fill = Family.x,
+                                                     y = studies)) +
+    geom_bar(stat = "identity", width = 1) +
+    # scale_y_continuous(labels = c("0" = "1",
+    #                                "1" = "10",
+    #                                "2" = "100",
+    #                                "3" = "1000")) +
+    scale_fill_manual(values = colours, guide = "none") +
+    labs(x = "Species", y = "Number of studies") +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank()))
+
+ggsave("../Final figures/Figure 2/barplot.pdf", barplot,
+       width = 2, height = 2, units = "in")
+
+
+
+# Add figures together later in Inkscape
+
+
+
+# Supplementary figure: Repeat with all mammal-consumers ----
+
+# Reload phylogeny
+forest <- read.nexus("../Phylogenies/Complete_phylogeny.nex")
+names(forest) <- NULL
+set.seed(42)
+forest <- forest[sample(1:1000, 30)]
+
+# Get all potential mammal-consumers
+(sp <- levels(cd.wos.hits$Bin.))
 
 # Trim tree down to the species list of MEMs created earlier
 pruned.forest <- lapply(forest, 
@@ -468,30 +563,17 @@ tree <- pruned.forest[1]
 plot(tree)
 summary(tree)
 
-# Group tree by extant species for marking them later
-tree <- groupOTU(tree,
-                 tree$tip.label %in% sp)
-
 # Turn tree to dataframe
 tree <- fortify(tree)
 
 # Change columns name in carnivore summary
 colnames(carnivore.summary.master)[1] <- "Binomial.1.2"
 
-# Add trait info
-tree <- left_join(tree, carnivore.summary.master, by = c("label" = "Binomial.1.2"))
+# Add number of studies to tree
+tree <- left_join(tree, carnivore.summary.master, by = c("label" = "Binomial.1.2"), all.x = TRUE)
 
 # Reverse age scale
 tree$x <- tree$x - max(tree$x)
-
-# Prepare studies based legend
-#mass.breaks <- marsupials$Mass.g/1000
-#mass.breaks <- ceiling(c(min(mass.breaks), median(mass.breaks), max(mass.breaks)))
-
-# Prepare IUCN status color legend. We use a modified version of IUCN's official color palette
-# status.colors <- c("EP" = "#87421F", "EX" = "#8F47B3", "EW" = "#8F47B3", 
-#                    "CR" = "#D81E05", "EN" = "#FC7F3F", "VU" = "#F9E814", 
-#                    "NT" = "#CCE226", "LC" = "#60C659", "DD" = "#D1D1C6")
 
 # Convert multiPhylo to data.frame
 pruned.forest <- fortify(pruned.forest)
@@ -499,15 +581,7 @@ pruned.forest <- fortify(pruned.forest)
 # Reverse ages to show time BP
 pruned.forest$x <- pruned.forest$x - max(pruned.forest$x)
 
-# Plot forest of uncertainty (based on only 30 out of 1000 trees for speed)
-# p.tree <- ggplot(pruned.forest) +
-#   geom_tree(col = "lightblue", alpha = .3, multiPhylo = TRUE, layout = "circular") +
-#   theme_tree2() +
-#   scale_x_continuous("Time BP (Ma)",
-#                      limits = c(min(tree$x), 23), breaks = seq(-50, 0, 10),
-#                      label = abs(seq(-50, 0, 10)))
-
-# Create new name binomial names
+# Update binomial names for aesthetics
 foo <- data.frame(do.call('rbind', strsplit(as.character(tree$label),'_',fixed=TRUE)))
 tree$Genus <- substring(foo$X1,1,1)
 tree$Species <- foo$X2
@@ -516,101 +590,157 @@ tree$label2 <- paste(tree$Genus, tree$Species, sep = ". ")
 # What happens if you change the branch length?
 tree$branch.length <- tree$branch.length/2
 
+# Merge family info to new tree with all mammal-consumers
+tree <- left_join(tree, cd.wos.hits, by = c("label" = "Bin."))
+levels(tree$Family)
+
+# Update colour scheme to match previous, although requires some hackery
+levels(carnivore.summary.master$Family.x)
+levels(tree$Family.x)
+
 colours <- c("#CCCCCC","#99CC00","#999999","#339900","#CC9900","#FFCC00","#FF6600","#993300",
              "#FFCCCC","#CC6699","#FF99FF","#663399","#9999CC","#3399FF","#CCFFFF","#003333")
+# Add random colours into the plot but keep colours for families in CarniDIET constant
+colours.updated <- c("#CCCCCC", # Canidae IN
+             "#CCCCCC", # Cricetidae OUT
+             "#99CC00", # Dasyuridae IN
+             "#999999", # Didelphidae IN
+             "#CCCCCC", # Erinaceidae OUT
+             "#339900", # Eupleridae IN
+             "#CC9900", # Felidae IN
+             "#FFCC00", # Gliridae IN
+             "#FF6600", # Herpestidae IN
+             "#993300", # Hyaenidae IN
+             "#FFCCCC", # Lorisidae IN
+             "#CCCCCC", # Megadermatidae OUT
+             "#CC6699", # Mephitidae IN
+             "#FF99FF", # Mustelidae IN
+             "#663399", # Phyllostomidae IN
+             "#CCCCCC", # Pitheciidae OUT
+             "#9999CC", # Procyonidae IN
+             "#CCCCCC", # Soricidae OUT
+             "#CCCCCC", # Tenrecidae OUT
+             "#CCCCCC", # Tupaiidae OUT
+             "#3399FF", # Ursidae IN
+             "#CCFFFF", # Viverridae IN
+             "#003333") # Spare colour...
+# Could have made a data frame of colour assignments to families and filtered, but meh!
 
+# Plot phylogenetic tree
 (p <- ggtree(tree, layout='circular', ladderize = FALSE) +
     geom_tiplab(size=1.5, aes(label = label2, parse = T, size= 3.5, angle=angle), offset = 10) +
-    geom_tippoint(aes(x, y, fill = Family.x, size = studies), pch = 21, colour = "black", alpha = 0.75) +
-    scale_fill_manual(values = colours) +
-    xlim(-160, 30) +
+    geom_tippoint(aes(x, y, fill = Family, size = studies), pch = 21, colour = "black", alpha = 0.75) +
+    scale_fill_manual(values = colours.updated) +
+    #xlim(-160, 30) +
     theme(panel.background = element_blank(),
           legend.position = "none"))
 
-ggsave("./Results/Figures/Final figures/Figure 1/Phylo tree.pdf", p,
-       width = 4, height = 4, units = "in")
+# Save plot
+ggsave("../Final figures/Figure S3/Phylo tree_ALL Species.pdf", p,
+       width = 5, height = 5, units = "in")
+
+# Get histogram of number of studies for all potential species:
+tree[is.na(tree$studies),]$studies <- 0 # Turn NA to 0
+
+# Plot
+(hist <- ggplot(data = tree[!is.na(tree$label),], aes(x = log10(studies + 1))) +
+    geom_histogram(binwidth = 0.1, colour = "black", fill = "lightgrey") +
+    # scale_x_continuous(labels = c("0" = "1",
+    #                               "1" = "10",
+    #                               "2" = "100",
+    #                               "3" = "1000")) +
+    labs(x = "Number of studies", y = "Number of species") +
+    coord_flip() +
+    theme_bw() +
+    theme(panel.grid = element_blank()))
+
+# Save histogram
+ggsave("../Final figures/Figure S3/Histogram_All potential.pdf", hist,
+       width = 2, height = 2, units = "in")
+
+
+# Alternative: Barplot
+
+test <- tree %>% group_by(label) %>% summarise()
+test <- tree[!is.na(tree$label),]
+test <- as.data.frame(test)
+test <- test %>% dplyr::group_by(label, Family.x) %>% dplyr::summarise(studies = sum(studies))
+
+(barplot <- ggplot(data = test, aes(x = reorder(label, -studies),
+                                                        fill = Family.x,
+                                                        y = studies)) +
+    geom_bar(stat = "identity", width = 1) +
+    scale_fill_manual(values = colours, guide = "none") +
+    labs(x = "Species", y = "Number of studies") +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank()))
+
+ggsave("../Final figures/Figure S3/Histogram_All potential.pdf", barplot,
+       width = 2, height = 2, units = "in")
+
+
+
+# Move together into Inkscape later
+
 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
 # ---- Spatio-temporal distribution of dietary studies ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
-# ---- Summarising data ----
+# Get unique studies ----
 # Find the number of studies
-levels(carnidiet$Latitude.Centroid.Mean.x)
-str(carnidiet$Latitude.Centroid.Mean.x)
-as.numeric(as.character(carnidiet$Latitude.Centroid.Mean.x))
-
 temporal.diet <- carnidiet %>% 
-  dplyr::group_by(Family, CarniBinom, Age, Sex, Scat.Stomach.Tissue,Prey.Items.Kill.Sample.Size,
-                  PR.Title, Country, Region, SiteName, AltitudeMaximum,
-                  Start.Year,End.Year, Start.Month,End.Month, Season, Sample.Source, Method, ECO_NAME,
-                  BIOME, Latitude.Centroid.Mean.x, Longitude.Centroid.Mean.x) %>% 
+  dplyr::group_by(Family, CarniBinom, Age, Sex, # Unique species and demography
+                  Scat.Stomach.Tissue,Prey.Items.Kill.Sample.Size, # Unique methods
+                  Sample.Source, Method, 
+                  Country, Region, SiteName, AltitudeMaximum, # Unique spatial information
+                  Latitude.Centroid.Mean.x, Longitude.Centroid.Mean.x,
+                  Start.Year,End.Year, Start.Month,End.Month, Season, # Unique temporal information
+                  PR.Title) %>%  # Unique source
   dplyr::summarise(x = length(CarniBinom))
-nrow(temporal.diet)
 
-# Find the midpoint of each study
+nrow(temporal.diet) # 3159 studies, YEP
+
+# Get midpoints for each study:
 temporal.diet$Mid.Year <- (temporal.diet$Start.Year + temporal.diet$End.Year)/2
-temporal.diet <- temporal.diet[!temporal.diet$BIOME > 14,]
-temporal.diet$BIOME <- as.factor(temporal.diet$BIOME)
-temporal.diet$Latitude.Centroid.Mean.x <- as.numeric(as.character(temporal.diet$Latitude.Centroid.Mean.x))
 
-temporal.diet <- temporal.diet[!is.na(temporal.diet$CarniBinom),]
-temporal.diet <- temporal.diet[!temporal.diet$Latitude.Centroid.Mean.x == "#N/A",]
-temporal.diet$Latitude.Centroid.Mean.x <- as.numeric(as.character(temporal.diet$Latitude.Centroid.Mean.x))
-str(temporal.diet)
+# Figure: Spatio-temporal distribution ----
 
-# Max year 
-min(temporal.diet[!is.na(temporal.diet$Start.Year),]$Start.Year)
-max(temporal.diet[!is.na(temporal.diet$End.Year),]$End.Year)
-2017-1933 # 84 years
+# Find median and IQR of study mid-year
+(mid.years <- temporal.diet$Mid.Year[!is.na(temporal.diet$Mid.Year)])
 
+(median.year <- quantile(mid.years)[3])
+(LQ.year <- quantile(mid.years)[2])
+(UQ.year <- quantile(mid.years)[4])
 
-# ---- Figure: Spatio-temporal distribution ----
+# Find median and IQR of study latitudes
+latitudes <- temporal.diet$Latitude.Centroid.Mean.x[!is.na(temporal.diet$Latitude.Centroid.Mean.x)]
 
-# Find median and IQR for study latitude and year
-mid.year <- temporal.diet$Mid.Year
-median.year <- median(mid.year[!is.na(mid.year)])
-quantile(mid.year[!is.na(mid.year)])
+(median.lat <- quantile(abs(latitudes))[3])
+(LQ.lat <- quantile(abs(latitudes))[2])
+(UQ.lat <- quantile(abs(latitudes))[4])
 
-Latitude.Centroid.Mean.x <- temporal.diet$Latitude.Centroid.Mean.x
-median.lat <- median(Latitude.Centroid.Mean.x[!is.na(Latitude.Centroid.Mean.x)])
-quantile(abs(Latitude.Centroid.Mean.x[!is.na(Latitude.Centroid.Mean.x)]))
-
-# Create shading dataframe
-shading <- data.frame(xmin = c(0,12.04167,12.04167),
-                      xmax = c(80,49.05833,49.05833),
-                      ymin = c(1994,1930,1994),
-                      ymax = c(2006,2010,2006),
-                      rect = c("A","A","B"))
-
-# Get colour scheme properly:
-
-# Remove 9th and 12th colour from previous colour scheme to account for the fact that Lorisidae and 
-# Phylloestomidae are not shown here as they do not have coords or year of study... 
+# Get colour scheme consistent again:
 colours <- c("#CCCCCC","#99CC00","#999999","#339900","#CC9900","#FFCC00","#FF6600","#993300",
-             "#CC6699","#FF99FF","#9999CC","#3399FF","#CCFFFF","#003333")
+             "#FFCCCC","#CC6699","#FF99FF","#663399","#9999CC","#3399FF","#CCFFFF","#003333")
 
-# Plot Predicts-style figure which shows the year and location of studies
+# Plot figure showing temporal distribution and |latitude| of studies
 p1 <- ggplot() +
-  annotate("rect",xmin =-Inf, xmax = Inf, ymin = 1995, ymax =2008, alpha = .2) +
-  annotate("rect",xmin = 30.857, xmax = 48,ymin = -Inf, ymax =Inf, alpha = .2) +
-  annotate("rect",xmin = 30.857, xmax = 48,ymin = 1995, ymax =2008, alpha = .2) +
+  annotate("rect",xmin =-Inf, xmax = Inf, ymin = LQ.year, ymax =UQ.year, alpha = .2) +
+  annotate("rect",xmin = LQ.lat, xmax = UQ.lat, ymin = -Inf, ymax =Inf, alpha = .2) +
+  annotate("rect",xmin = LQ.lat, xmax = UQ.lat,ymin = LQ.year, ymax = UQ.year, alpha = .2) +
   ylab("Year") + xlab("|Latitude|") +
   coord_flip() +
   scale_y_continuous(breaks = c(1940,1960,1980,2000,2020)) + 
-  # geom_pointrange(data = temporal.diet, 
-  #                 aes(y = Mid.Year, ymin = Start.Year, ymax = End.Year, 
-  #                     x = abs(Latitude.Centroid.Mean.x), colour = Family),
-  #                 pch = 21, alpha = .5, shape = NULL) +
-    
     geom_errorbar(data = temporal.diet, 
                     aes(ymin = Start.Year, ymax = End.Year, 
                         x = abs(Latitude.Centroid.Mean.x), colour = Family), alpha = .5, width = 0) +
     geom_point(data = temporal.diet, 
                aes(y = Mid.Year, x = abs(Latitude.Centroid.Mean.x),fill = Family),
-               pch = 21, alpha = .5, colour = "black", size = 2) +
-  #scale_fill_manual(values = c("#CCCCCC","#666666")) +
+               pch = 21, alpha = .5, colour = "black", size = 1.5) +
   geom_vline(xintercept = median.lat) + # Median latitude
   geom_vline(xintercept = 23.5, linetype = 2) + # Tropic lines
   annotate("text", x = 22, y = 1936.5, label = "Tropic lines", colour = "black", size = 3) +
@@ -630,57 +760,81 @@ p1 <- ggplot() +
                      panel.grid.minor = element_blank(),
                      panel.grid.major = element_blank())
 
-# ggsave("./Results/Figures/Spatio-temporal information_UPDATED.tiff", p1,
-#        width = 10, height = 8, dpi = 100)
-
-ggsave("./Results/Figures/Final figures/Figure 2/Test.pdf", p1, 
-       width = 6, height = 5, units = "in")
-
-# Desciptive data
-temporal.diet$Abs.Lat <- abs(as.numeric(as.character(temporal.diet$Latitude.Centroid.Mean.x)))
-
-median(temporal.diet[!is.na(temporal.diet$Abs.Lat),]$Abs.Lat)
-quantile(temporal.diet[!is.na(temporal.diet$Abs.Lat),]$Abs.Lat)[2]
-quantile(temporal.diet[!is.na(temporal.diet$Abs.Lat),]$Abs.Lat)[4]
-
-median(temporal.diet[!is.na(temporal.diet$Mid.Year),]$Mid.Year)
-quantile(temporal.diet[!is.na(temporal.diet$Mid.Year),]$Mid.Year)[2]
-quantile(temporal.diet[!is.na(temporal.diet$Mid.Year),]$Mid.Year)[4]
-
-#temporal.diet <- as.data.frame(unique(temporal.diet[c(1:4)]))
-temporal.diet <- temporal.diet[!is.na(temporal.diet$Start.Year),] 
-temporal.diet$YearstoAdd = temporal.diet$End.Year - temporal.diet$Start.Year
-temporal.diet$CarniBinom <- factor(temporal.diet$CarniBinom)
-
-# Make world maps of the distribution of studies
-biomes <- st_read("./Data/GIS/ecoregions_biomes/biomes/global_biomes.shp")
-str(biomes)
-
-# Transform biomes into a 
-# mollweile.proj <- "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
-# biomes2 <- st_transform(biomes, mollweile.proj)
-
-str(temporal.diet)
-temporal.diet$Longitude.Centroid.Mean.x <- as.numeric(as.character(temporal.diet$Longitude.Centroid.Mean.x))
-hist(temporal.diet$Latitude.Centroid.Mean.x)
-hist(temporal.diet$Longitude.Centroid.Mean.x)
+# Save figure
+ggsave("../Final figures/Figure 1/Spatio-temporal information_UPDATED.tiff", p1,
+        width = 10, height = 8, dpi = 100)
 
 
-p2 <- ggplot() +
-  geom_sf(data = biomes, fill = "lightgrey", alpha = 0.4) +
-  geom_point(data = temporal.diet, aes(x = x,
-                                       y = y, fill = Family), 
-             alpha = .5, pch = 21, colour = "black", size = 2) +
-  labs(x = "", y = "") +
-  geom_hline(yintercept = 0, linetype = 1, alpha = .5) +
-  geom_hline(yintercept = 23.5, linetype = 2, alpha = .5) +
-  geom_hline(yintercept = -23.5, linetype = 2, alpha = .5) +
-  scale_fill_manual(values = colours) +
+
+# Figure: Map showing study distribution ----
+
+# Get biomes and dissolve into a world map
+biomes <- st_read("../GIS/ecoregions_biomes/biomes/global_biomes.shp")
+crs(biomes)
+class(biomes)
+world <- st_union(biomes)
+class(world)
+
+# Practice plot with different projection system
+ggplot() + 
+  geom_sf(data = world) +
+  coord_sf(crs = "+proj=moll") +
   theme_bw() + theme(panel.grid.minor = element_blank(),
+                     panel.grid.major = element_blank(),
+                     panel.border = element_blank(),
+                     panel.background = element_blank())
+
+# Convert study information into a spatial points dataframe
+colnames(temporal.diet)
+
+# Remove NAs in the dataframe
+temporal.diet.no.nas <- temporal.diet[!is.na(temporal.diet$Latitude.Centroid.Mean.x),]
+temporal.diet.no.nas <- temporal.diet[!is.na(temporal.diet$Longitude.Centroid.Mean.x),]
+
+# change to sf object and will change to Mollweide projection...difficult
+coords <- as.data.frame(temporal.diet.no.nas[c(14,13)])
+
+# Get Spatial points
+temporal.diet.sp <- SpatialPointsDataFrame(coords = coords,
+                                  data = temporal.diet.no.nas,
+                                  proj4string = CRS(crs(biomes)))
+print(temporal.diet.sp)
+
+temporal.diet.sp <- st_as_sf(temporal.diet.sp)
+
+# Need to get colours right again...
+levels(factor(temporal.diet$Family))
+colours <- c("#CCCCCC","#99CC00","#999999","#339900","#CC9900","#FFCC00","#FF6600","#993300",
+             "#FFCCCC","#CC6699","#FF99FF","#663399","#9999CC","#3399FF","#CCFFFF","#003333")
+
+levels(factor(temporal.diet.sp$Family))
+
+colours.updated.again <- c("#CCCCCC","#99CC00","#999999","#339900","#CC9900","#FFCC00","#FF6600","#993300",
+                           "#FFCCCC","#CC6699","#FF99FF","#9999CC","#3399FF","#CCFFFF","#003333")
+
+# Merge taxonomic info 
+temporal.diet.sp <- merge(temporal.diet.sp, order.family, by = "Family", all.x = TRUE)
+levels(temporal.diet.sp$Order)
+temporal.diet.sp$Carnivora <- NA
+
+temporal.diet.sp[temporal.diet.sp$Order == "Carnivora",]$Carnivora <- "Carnivora"
+temporal.diet.sp[temporal.diet.sp$Order != "Carnivora",]$Carnivora <- "Non-Carnivora"
+
+
+# Plot map
+p2 <- ggplot() +
+  geom_sf(data = world, fill = "lightgrey", alpha = 0.4) +
+  geom_sf(data = temporal.diet.sp, aes(fill = Family), 
+          alpha = .4, pch = 21, colour = "black", size = 1.5) +
+  coord_sf(crs = "+proj=moll") +
+  labs(x = "", y = "") +
+  scale_fill_manual(values = colours.updated.again) +
+  theme_bw() + theme(panel.grid.minor = element_blank(),
+                     panel.grid.major = element_blank(),
                         panel.border = element_blank(),
                         panel.background = element_blank())
 
-ggsave("./Results/Figures/Final figures/Figure 2/Testfig2.pdf", p2, 
+ggsave("../Final figures/Figure 2/Testfig2.pdf", p2, 
        width = 15, height = 8, units = "in")
 
 # mylegend<-g_legend(p1)
@@ -689,23 +843,24 @@ ggsave("./Results/Figures/Final figures/Figure 2/Testfig2.pdf", p2,
 #                                p2 + theme(legend.position="none")),
 #                    mylegend, nrow=3,heights=c(1, 1))
 
+# Save both figures together...
+
 p3 <- ggarrange(p1,
                 p2,
                 ncol=1, nrow=2, labels = "auto",
                 common.legend = TRUE, legend="right")
    
-ggsave("./Results/Figures/Final figures/Figure 2/Combined spatio-temporal_molweile.pdf", p3, 
+ggsave("../Final figures/Figure 1/Combined spatio-temporal_mollweide.pdf", p3, 
        width = 8, height = 8, units = "in")
 
 # ---- Data summary: More information on temporal information ----
+
 # What is the average length of time a study is reported for
 x <- temporal.diet[!is.na(temporal.diet$End.Year),]
 y <- x[!is.na(x$Start.Year),]
 
 median(y$End.Year - y$Start.Year)
 quantile(y$End.Year - y$Start.Year)
-
-table(temporal.diet$Season)
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
 # ---- Diet resolution ----
@@ -725,9 +880,7 @@ diet.records_perSource <- carnidiet %>%
 
 # Get percentage of records for each sample source
 perc <- diet.records_perSource %>% dplyr::group_by(Sample.Source) %>% dplyr::summarise(num = sum(records))
-perc
-perc$perc <- (perc$num/sum(perc$num))*100
-perc
+(perc$perc <- (perc$num/sum(perc$num))*100)
 
 diet.records_perSource <- spread(diet.records_perSource, Sample.Source, records)
 
@@ -746,7 +899,7 @@ diet.records_perMethod <- spread(diet.records_perMethod, Method, records)
 
 # Number of unique prey species identified in species diets
 carnidiet$PreyBinom <- as.factor(carnidiet$PreyBinom)
-levels(carnidiet$PreyBinom)
+nlevels(carnidiet$PreyBinom)
 
 colnames(carnidiet)
 prey <- carnidiet[c(4,12)]
@@ -760,7 +913,7 @@ prey.consumed <- prey %>%
 
 # Percentage of records which are at different taxonomic resolutions
 colnames(carnidiet)
-prey <- carnidiet[c(4,7:12,17)]
+prey <- carnidiet[c(4,7:12,15)]
 prey$value <- 1
 
 prey <- prey %>%
@@ -831,11 +984,6 @@ data.sources <- data.sources[data.sources$sum > 100,]
 data.sources$variable <- factor(data.sources$variable)
 data.sources$variable <- reorder(data.sources$variable, -data.sources$sum)
 
-# ---- Figure: Sum of records for each source of diet information ----
-ggplot(data.sources, aes(x = variable, y = sum)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90))
-
 # Methods of data quantification
 data.sources <- diet.summary[c(30:39)]
 data.sources <- melt(data.sources)
@@ -845,10 +993,7 @@ data.sources <- data.sources[data.sources$sum > 100,]
 data.sources$variable <- factor(data.sources$variable)
 data.sources$variable <- reorder(data.sources$variable, -data.sources$sum)
 
-# ---- Figure: Sum of records for each diet quantification method used ----
-ggplot(data.sources, aes(x = variable, y = sum)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90))
+
 
 # ---- Figure: Number of records used from each source and methods used in each source ----
 diet.method.summary <- carnidiet %>% dplyr::group_by(Sample.Source, Method) %>% dplyr::summarise(count = length(Method))
@@ -859,24 +1004,22 @@ diet.method.summary$Sample.Source <- reorder(diet.method.summary$Sample.Source, 
 diet.method.summary$Sample.Source <- factor(diet.method.summary$Sample.Source,
                                             levels(diet.method.summary$Sample.Source)[c(2,1,4,5,3,6:7)])
 
-p1 <- ggplot(diet.method.summary, aes(x = Sample.Source, y = count, fill = Method)) +
-  geom_bar(stat = "identity") +
-  theme_bw() +
+(p1 <- ggplot(diet.method.summary, aes(x = Sample.Source, y = count, fill = Method)) +
+  geom_bar(stat = "identity", colour = "black") +
+    theme_classic() +
   theme(axis.text.x = element_text(angle = 90, vjust = .5)) +
   scale_y_continuous(limits = c(0,18000), expand = c(0, 0)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  xlab("Sample source") + ylab("Records") +
-  scale_fill_manual(values = colours) +
-  theme(axis.text = element_text(size = 10),
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  xlab("Sample origin") + ylab("Records") +
+  scale_fill_brewer(palette = "Greys") +
+  theme(axis.text = element_text(size = 10, angle = 90),
         legend.text = element_text(size = 4),
         axis.title = element_text(size = 10),
         legend.title = element_blank(),
         legend.position=c(.6,.85),
-        legend.key.size =  unit(0.1, "in")) # Change key size in the legend)
-p1
+        legend.key.size =  unit(0.1, "in"))) # Change key size in the legend)
 
-ggsave("./Results/Figures/Final figures/Figure 1/DietMethodSummary.pdf", p1,
-       width = 2.5, height = 3.5, units = "in")
+
 
 # ---- Figure: Number of records used for each source and the breakdown of taxonomic resolution ----
 diet.resolution  <- carnidiet %>% dplyr::group_by(Sample.Source, TaxonomicPrecision) %>% dplyr::summarise(count = length(TaxonomicPrecision))
@@ -894,15 +1037,15 @@ levels(factor(diet.resolution$TaxonomicPrecision))
 diet.resolution$TaxonomicPrecision <- factor(diet.resolution$TaxonomicPrecision,
                                              levels(factor(diet.resolution$TaxonomicPrecision))[c(4,1,5,2,3,7,6)])
 
-## ---- Figure: Final summary of record/diet information ----
-p <- ggplot(diet.resolution, aes(x = Sample.Source, y = count, fill = TaxonomicPrecision)) +
-  geom_bar(stat = "identity") +
-  theme_bw() +
+# Plot figure
+(p <- ggplot(diet.resolution, aes(x = Sample.Source, y = count, fill = TaxonomicPrecision)) +
+  geom_bar(stat = "identity", colour = "black") +
+    theme_classic() +
   theme(axis.text.x = element_text(angle = 90, vjust = .5)) +
-  scale_fill_manual(values = colours) +
+  scale_fill_brewer(palette = "Greys") +
   scale_y_continuous(limits = c(0,18000), expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  xlab("Sample source") + ylab("Records") +
+  xlab("Sample origin") + ylab("Records") +
   theme(axis.text = element_text(size = 10),
         legend.text = element_text(size = 4),
         axis.title = element_text(size = 10),
@@ -910,37 +1053,23 @@ p <- ggplot(diet.resolution, aes(x = Sample.Source, y = count, fill = TaxonomicP
         #axis.text.x = element_blank(),
         #axis.title.x = element_blank(),
         legend.position=c(.78,.76),
-        legend.key.size =  unit(0.1, "in"))
-p
+        legend.key.size =  unit(0.1, "in")))
 
-p3 <- ggarrange(p, p1, ncol=1, nrow=2, labels = "auto")
-p3
+# Plot both figures together
+(p4 <- ggarrange(p + theme(axis.ticks.x = element_blank()),
+                p1 + theme(axis.ticks.x = element_blank()),
+                      ncol=2, nrow=1, labels = "auto"))
 
-ggsave("./Results/Figures/Final figures/Figure 1/DietResolutionSummary.pdf", p3,
-       width = 3, height = 6, units = "in")
+# Save plot
+ggsave("../Final figures/Figure 2/DietResolutionSummary_long.pdf", p4,
+       width = 6, height = 3.5, units = "in")
 
-p4 <- ggarrange(p + theme(axis.ticks.x = element_blank()),
-                p1 + theme(axis.text.x = element_blank(),
-                                    axis.title.x = element_blank(),
-                                    axis.ticks.x = element_blank()),
-                      ncol=2, nrow=1, labels = "auto")
-
-ggsave("./Results/Figures/Final figures/Figure 1/DietResolutionSummary_long.pdf", p4,
-       width = 4.5, height = 2.5, units = "in")
-
-
-# Alte
-p4 <- ggarrange(p,
-                p1,
-                ncol=2, nrow=1, labels = "auto")
-p4
-
-ggsave("./Results/Figures/Final figures/Figure 1/DietResolutionSummary_long.pdf", p4,
-       width = 6, height = 3, units = "in")
-
+# Summary statistics
 table(carnidiet$Sample.Source)
 table(carnidiet$Method)
 table(carnidiet$TaxonomicPrecision)
+
+
 
 # ---- Simulation of prey species richness with random samples ----
 # First, descriptive statistics of the number of prey species recorded in diet analyses
@@ -948,8 +1077,10 @@ x <- carnidiet[carnidiet$TaxonomicPrecision == "Species",]
 colnames(x)
 prey.info <- x[c(7:13)]
 
-# Proportion of records 
-table(prey.info$PreyOrder)
+# Proportion of predator-orey records - which orders... 
+t <- as.data.frame(table(prey.info$PreyOrder))
+t$perc <- (t$Freq/sum(t$Freq))*100
+
 table(prey.info$PreyFamily)
 table(prey.info$PreyGenus)
 
