@@ -13,6 +13,7 @@ As with any form of data collection, we are aware there will be likely errors wi
 
 # Download
 To download, click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET Version 1.0 contained within the downloaded folder.
+
 *We will soon be providing a Shiny app to explore the database interactively.*
 
 
