@@ -5,7 +5,7 @@ The behaviour of carnivores within the world's ecosystems have been a hot topic 
 
 
 # Our aim?
-The curiosity of humans with the natural world has resulted in a surplus of valuable ecological data spread throughout the literature and various archives. While just the tip of the iceburg, we aim to compile these treasure trove of species diet data in a standardised way for use in future macroevolutionary, macroecological, and conservation research.
+The curiosity of humans with the natural world has resulted in a surplus of valuable ecological data spread throughout the literature and various archives. While just the tip of the data-iceburg (i.e. *"data-burg"*), we aim to compile these treasure troves of data that quantify species' diets at given points in space and time in a standardised way for use in future macroevolutionary, macroecological, and conservation research.
 
 We want CarniDIET to act as a central database for storing quantitative data on the dietary composition of carnivores from a variety of sources (Version 1.0 currently consists primarily of peer-reviewed scientific papers). However, in the future we aim to build on this to incorporate (1) more species, including ideally beyond mammals, and (2) from more types of sources.
 
