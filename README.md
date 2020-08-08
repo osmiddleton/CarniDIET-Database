@@ -1,3 +1,5 @@
+![GitHub Logo](/images/GitHub Logo/logo.png)
+
 # CarniDIET: A global database of terrestrial carnivore diets
 The curiosity of humanity, and scientists specifically, with the natural world has resulted in a surplus of data spread throughout the literature and various archives. Compiling such  data in a standardised way for us in future research and conservation is vital for ensuring these valuable resources of knowledge are continued to be used in the future.
 
