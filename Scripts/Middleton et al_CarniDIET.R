@@ -4,7 +4,7 @@
 #   
 #   A database on the diets of the world's terrestrial carnivorous mammals
 #   
-#   The purpose of this script is to summarise the data collected within CarniDIET:
+#   Script: Summarise data within CarniDIET for the manuscript "TBC"
 #   
 #   - 1. Metadata: Information for database metadata
 #   
@@ -23,12 +23,11 @@
 #        
 #   - 5. Methodology used to quantify diets:
 #        - Percentage of records made using different methods
-# 
-#     All figures were created in this script for the publication:
 #       
 #   A note on taxonomy:
-#   This study will follow the taxonomy of the Phylacine v1.2 database due to the purpose of being built to be a standardised
-#   database for macroecolgoical research on mammals in the Late Quaternary
+#   Taxonomy follows that of Phylacine v1.2 (Faurby et al., 2018) due to the
+#   purpose of it being built to be a standardised database for macroecolgoical
+#   research on mammals during the Late Quaternary.
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
@@ -88,7 +87,7 @@ nlevels(carnidiet$Sex) # Both sexes and both/unknown
 
 # How many levels for food-type variables:
 # the '-1' accounts for "" entries which could be treated as NA's...
-levels(carnidiet$Food.type) # 16 Food types
+levels(carnidiet$Food.type) # 15 Food types
 levels(carnidiet$PreyOrder) # 62 prey orders
 levels(carnidiet$PreyFamily) # 130 prey families
 levels(carnidiet$PreyGenus) # 490 prey genera
@@ -101,7 +100,7 @@ dom <- carnidiet %>% filter(Domestic.Agricultural == 1) %>% droplevels()
 levels(dom$PreyBinom)
 
 # Categories of taxonomic precision
-levels(carnidiet$TaxonomicPrecision) # 11 categories of taxonomic precision
+levels(carnidiet$TaxonomicPrecision) # 10 categories of taxonomic precision
 
 # Range of quantitative importance of prey species or food type
 range(carnidiet$QuantificationImportance) # 0.005% to 100%
@@ -129,8 +128,8 @@ levels(factor(carnidiet[!is.na(carnidiet$End.Day),]$End.Day))
 levels(carnidiet$Season) # 56 seasons
 
 # ----- 4. Methods information ----
-levels(carnidiet$Method) # 10 quantification methods
-levels(carnidiet$Sample.Source) # 20 Diet Sample Origins
+levels(carnidiet$Method) # 9 quantification methods
+levels(carnidiet$Sample.Origin) # 20 Diet Sample Origins
 
 # ----- 5. Spatial information -----
 # Altitude
@@ -165,7 +164,7 @@ levels(carnidiet$CollectionRef) # 683 Collection Refs
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # How many potential ...?
-nrow(cd.wos.hits) # 213 species
+length(unique(cd.wos.hits$Bin.)) # 210 species
 levels(cd.wos.hits$Order) # 9 orders
 levels(cd.wos.hits$Family) # 23 families
 
@@ -344,7 +343,7 @@ carnivore.summary <- carnidiet %>%
 carnivore.summary.2 <- carnidiet %>% 
                        dplyr::group_by(Family, CarniBinom, Age, Sex, # Unique species and demography
                                        Scat.Stomach.Tissue,Prey.Items.Kill.Sample.Size, # Unique methods
-                                       Sample.Source, Method, 
+                                       Sample.Origin, Method, 
                                        Country, Region, SiteName, AltitudeMaximum, # Unique spatial information
                                        Latitude.Centroid.Mean.x, Longitude.Centroid.Mean.x,
                                        Start.Year,End.Year, Start.Month,End.Month, Season, # Unique temporal information
@@ -365,8 +364,8 @@ length(unique(carnidiet$PrimaryRef)) # 749, unique sources
 sum(carnivore.summary.master$studies) # 3160 - This is all individual studies
 3160/749 # On average, there are 4 studies per source
 
-# 475 papers = 50% source
-# 713 = 75% source
+# 475 source = 50% source
+# 562 = 75% source
 
 # Tidy table
 colnames(carnivore.summary.master)[1] <- "CarniBinom"
@@ -379,14 +378,13 @@ y$CarniBinom <- factor(y$CarniBinom)
 levels(y$CarniBinom)
 
 # How many species need to be included to get 50% of the studies?
-(sum(x[1:9,]$studies)/3159)*100 #  9 species includes just over 50% studies
-(sum(x[1:20,]$studies)/3159)*100 # 20 species includes 70% studies
-(sum(x[1:24,]$studies)/3159)*100 # 24 species includes almost 75% studies
+(sum(x[1:9,]$studies)/3160)*100 #  9 species includes just over 50% studies
+(sum(x[1:20,]$studies)/3160)*100 # 20 species includes 70% studies
+(sum(x[1:24,]$studies)/3160)*100 # 24 species includes almost 75% studies
 
 # Find percentage lines
-(sum(x[1:1,]$studies)/3159)*100 # 14.8% studies
-(sum(x[1:6,]$studies)/3159)*100 # 40.5% studies
-(sum(x[1:10,]$studies)/3159)*100 # 52.9% studies
+(sum(x[1:1,]$studies)/3160)*100 # 14.8% studies
+(sum(x[1:9,]$studies)/3160)*100 # 50% studies
 
 # Rename species factor levels for figure
 y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes","Lynx_lynx" = "L. lynx",
@@ -411,12 +409,10 @@ y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes","Lynx_lynx
   xlab("") + ylab("Number of studies") +
   scale_fill_gradient(low = "lightgrey", high = "black", name = "Sources") +
   theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  geom_vline(xintercept = 19.5, colour = "black", linetype = 2, alpha = 0.8) + # 10% studies
-  geom_vline(xintercept = 14.5, colour = "black", linetype = 2, alpha = 0.8) + # 30% studies
-  geom_vline(xintercept = 5.5, colour = "black", linetype = 2, alpha = 0.8) + # 50% studies 
-  annotate("text", x = 19, y = 380, label = "10%", size = 3) +
-  annotate("text", x = 14, y = 380, label = "30%", size = 3) +
-  annotate("text", x = 5, y = 380, label = "50%", size = 3) +
+  geom_vline(xintercept = 19.5, colour = "black", linetype = 2, alpha = 0.8) + # 15% studies
+  geom_vline(xintercept = 11.5, colour = "black", linetype = 2, alpha = 0.8) + # 50% studies
+  annotate("text", x = 19, y = 380, label = "15%", size = 3) +
+  annotate("text", x = 11, y = 380, label = "50%", size = 3) +
   ylim(0,500) + theme(axis.text.y = element_text(face = "italic")))
 
 # Save plot
@@ -659,33 +655,6 @@ ggsave("../Final figures/Figure S3/Histogram_All potential.pdf", hist,
        width = 2, height = 2, units = "in")
 
 
-# Alternative: Barplot
-
-test <- tree %>% group_by(label) %>% summarise()
-test <- tree[!is.na(tree$label),]
-test <- as.data.frame(test)
-test <- test %>% dplyr::group_by(label, Family.x) %>% dplyr::summarise(studies = sum(studies))
-
-(barplot <- ggplot(data = test, aes(x = reorder(label, -studies),
-                                                        fill = Family.x,
-                                                        y = studies)) +
-    geom_bar(stat = "identity", width = 1) +
-    scale_fill_manual(values = colours, guide = "none") +
-    labs(x = "Species", y = "Number of studies") +
-    theme_bw() +
-    theme(panel.grid = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()))
-
-ggsave("../Final figures/Figure S3/Histogram_All potential.pdf", barplot,
-       width = 2, height = 2, units = "in")
-
-
-
-# Move together into Inkscape later
-
-
-
 #————————————————————————————————————————————————————————————————————————————————————————————####
 # ---- Spatio-temporal distribution of dietary studies ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
@@ -695,14 +664,14 @@ ggsave("../Final figures/Figure S3/Histogram_All potential.pdf", barplot,
 temporal.diet <- carnidiet %>% 
   dplyr::group_by(Family, CarniBinom, Age, Sex, # Unique species and demography
                   Scat.Stomach.Tissue,Prey.Items.Kill.Sample.Size, # Unique methods
-                  Sample.Source, Method, 
+                  Sample.Origin, Method, 
                   Country, Region, SiteName, AltitudeMaximum, # Unique spatial information
                   Latitude.Centroid.Mean.x, Longitude.Centroid.Mean.x,
                   Start.Year,End.Year, Start.Month,End.Month, Season, # Unique temporal information
                   PR.Title) %>%  # Unique source
   dplyr::summarise(x = length(CarniBinom))
 
-nrow(temporal.diet) # 3159 studies, YEP
+nrow(temporal.diet) # 3160 studies
 
 # Get midpoints for each study:
 temporal.diet$Mid.Year <- (temporal.diet$Start.Year + temporal.diet$End.Year)/2
@@ -748,13 +717,7 @@ p1 <- ggplot() +
   annotate("text", x = 2.5, y = 1935, label = "Equator", colour = "black", size = 3) +
   scale_fill_manual(values = colours) +
   scale_colour_manual(values = colours) +
-  #geom_vline(xintercept = 12.04167, linetype = 2) +
-  #geom_vline(xintercept = 49.05833, linetype = 2) +
   geom_hline(yintercept = median.year, colour = "black") + # Median year
-  #geom_hline(yintercept = 1994, linetype = 2, colour = "black") +
-  #geom_hline(yintercept = 2006, linetype = 2, colour = "black") +
-  #scale_size_continuous(values = log10(Scat.Stomach.Tissue)/2) +
-  #geom_line() +
   theme_bw() + theme(legend.position = "top",
                      legend.title = element_blank(),
                      panel.grid.minor = element_blank(),
@@ -779,7 +742,8 @@ class(world)
 ggplot() + 
   geom_sf(data = world) +
   coord_sf(crs = "+proj=moll") +
-  theme_bw() + theme(panel.grid.minor = element_blank(),
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
                      panel.grid.major = element_blank(),
                      panel.border = element_blank(),
                      panel.background = element_blank())
@@ -837,14 +801,6 @@ p2 <- ggplot() +
 ggsave("../Final figures/Figure 2/Testfig2.pdf", p2, 
        width = 15, height = 8, units = "in")
 
-# mylegend<-g_legend(p1)
-# 
-# grid.arrange(arrangeGrob(p1 + theme(legend.position="none"),
-#                                p2 + theme(legend.position="none")),
-#                    mylegend, nrow=3,heights=c(1, 1))
-
-# Save both figures together...
-
 p3 <- ggarrange(p1,
                 p2,
                 ncol=1, nrow=2, labels = "auto",
@@ -861,6 +817,78 @@ y <- x[!is.na(x$Start.Year),]
 
 median(y$End.Year - y$Start.Year)
 quantile(y$End.Year - y$Start.Year)
+
+
+
+# ---- How many time series are there in CarniDIET? ----
+
+# Need to figure out which sources give different  breakdowns with
+# these variables: 
+
+# Start.Year,End.Year
+# Start.Month,End.Month
+# Season
+
+# 1. Inter-annual studies (i.e. seasonal breakdowns)
+colnames(temporal.diet)
+
+time.series.diet <- temporal.diet[c(1,2,19,20)]
+(time.series.diet <- unique(time.series.diet))
+time.series.diet$value <- 1
+
+(time.series.diet <- time.series.diet %>% 
+  dplyr::group_by(CarniBinom, PR.Title) %>% 
+  dplyr::summarise(num.season = sum(value)))
+
+nrow(time.series.diet[time.series.diet$num.season >1,])
+# 223/949 unique combinations of sources and carnivore have
+# more than one season
+223/949 # 23.5%
+
+# 2. Annual time series (i.e. multiple years)
+colnames(temporal.diet)
+
+time.series.diet <- temporal.diet[c(1,2,15,20)]
+(time.series.diet <- unique(time.series.diet))
+time.series.diet$value <- 1
+
+(time.series.diet <- time.series.diet %>% 
+    dplyr::group_by(CarniBinom, PR.Title) %>% 
+    dplyr::summarise(num.years = sum(value)))
+
+nrow(time.series.diet[time.series.diet$num.years > 2,])
+# Only 45/949 combinations of carnivore and primary referemce
+44/949 # 4.6%
+
+# 3. Annual time series that also includes inter-annual breakdowns
+colnames(temporal.diet)
+
+time.series.diet <- temporal.diet[c(1,2,15,19,20)]
+(time.series.diet <- unique(time.series.diet))
+time.series.diet$value <- 1
+
+# First, how many seasons are there per year
+(time.series.diet <- time.series.diet %>% 
+    dplyr::group_by(CarniBinom, PR.Title, Start.Year) %>% 
+    dplyr::summarise(num.season = sum(value)))
+
+# Second, of those years that have multiple seasons, how many sources
+# also have multiple years
+time.series.diet <- time.series.diet[time.series.diet$num.season >1,]
+
+time.series.diet <- time.series.diet[c(1:3)]
+time.series.diet <- unique(time.series.diet)
+time.series.diet$value <- 1
+
+(time.series.diet <- time.series.diet %>% 
+    dplyr::group_by(CarniBinom, PR.Title) %>% 
+    dplyr::summarise(num.year = sum(value)))
+
+nrow(time.series.diet[time.series.diet$num.year >2,])
+# Only 14 unique combinations of carnivores and source have diet breakdowns
+# across multiple years and multiple seasons
+14/949 # 1.5%
+ 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
 # ---- Diet resolution ----
