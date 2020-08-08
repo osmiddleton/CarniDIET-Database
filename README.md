@@ -11,6 +11,11 @@ We want CarniDIET to act as a central database for storing quantitative data on 
 
 As with any form of data collection, we are aware there will be likely errors within  the database. To ensure we build an accurate and precise database that best reflects reported data from the primary sources, we encourage users to keep note of any transcription errors that occurred in the database and update us by contacting Owen Middleton. 
 
+# Download
+To download, click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET Version 1.0 contained within the downloaded folder.
+*We will soon be providing a Shiny app to explore the database interactively.*
+
+
 # Versions
 # 1.0: CarniDIET (08/08/2020)
 *Publication: TBC*
