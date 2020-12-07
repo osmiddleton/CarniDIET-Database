@@ -18,7 +18,7 @@ To download, click the green "Code" icon at the top, and press "Download ZIP". Y
 
 
 # Versions
-# 1.0: CarniDIET (08/08/2020)
+# CarniDIET 1.0
 *Publication: TBC*
 
 Version 1.0 consists of quantitative data on the dietary composition of 103 species of carnivorous mammals* from (mostly) peer-reviewed scientific papers.
