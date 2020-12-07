@@ -29,10 +29,10 @@ Version 1.0 consists of quantitative data on the dietary composition of 103 spec
 
 - Any missing diet records in sources in CarniDIET.
 
-- Including further species not included in MammalDIET:
-    - Dingos (Canis dingo)
-    - Feral cats (Felis catus)
-  
 -Including further search criteria in WoS searches.
  
 -Including further databases in searches (Zoological Records).
+
+- Including further species not included in MammalDIET:
+    - Dingos (Canis dingo)
+    - Feral cats (Felis catus)
