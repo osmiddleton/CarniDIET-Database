@@ -14,9 +14,9 @@ As with any form of data collection, we are aware there will be likely errors wi
 # Download
 To download, there are three options: 
 
-(1) Click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET Version 1.0 contained within the downloaded folder.
-(2) Go to the Shiny app (*URL TBC*) and download all, or a subset, of the data.
-(3) See supplementary material of the original publication: (*URL TBC*).
+ - (1) Click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET Version 1.0 contained within the downloaded folder.
+ - (2) Go to the Shiny app (*URL TBC*) and download all, or a subset, of the data.
+ - (3) See supplementary material of the original publication: (*URL TBC*).
 
 
 # Versions
