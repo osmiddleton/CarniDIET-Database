@@ -12,9 +12,11 @@ We want CarniDIET to act as a central database for storing quantitative data on 
 As with any form of data collection, we are aware there will be likely errors within  the database. To ensure we build an accurate and precise database that best reflects reported data from the primary sources, we encourage users to keep note of any transcription errors that occurred in the database and record these in the following Google Sheets document: https://docs.google.com/spreadsheets/d/1EQlCOael5m_G5WYPw_pkz94O--iFxxhgYEobbHVyM7U/edit?usp=sharing, or directly contacting Owen Middleton. 
 
 # Download
-To download, click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET Version 1.0 contained within the downloaded folder.
+To download, there are three options: 
 
-*We will soon be providing a Shiny app to explore the database interactively.*
+(1) Click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET Version 1.0 contained within the downloaded folder.
+(2) Go to the Shiny app (*URL TBC*) and download all, or a subset, of the data.
+(3) See supplementary material of the original publication: (*URL TBC*).
 
 
 # Versions
