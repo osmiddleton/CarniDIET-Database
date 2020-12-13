@@ -59,16 +59,14 @@ pacman::p_load(tidyverse,plyr,ggrepel,sp,sf,viridis,rgdal,
 
 #---- Load data ----
 # Load CarniDIET
-carnidiet <- read.csv("./Version 1.0/Submission 2/CarniDIET 1.0.csv")
-colnames(carnidiet)
+carnidiet <- read.csv("./Version 1.0/CarniDIET 1.0.csv")
 
 # Load potential species list
 # Includes species selected as primary consumers of mammals from MammalDIET (Kissling et al., 2014)
-cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/CarniDiet_PotentialSpecies.csv", header = TRUE)
+cd.wos.hits <- read.csv("./Version 1.0/Supplementary data/Potential species list.csv", header = TRUE)
 
 # Phylacine 
 phylacine <- read.csv("../Phylacine/Trait_data.csv")
-
 
 # IUCN species ranges
 ranges <- st_read("C:/Users/omidd/Box Sync/GIS Files/Range Maps/All_Mammals_Terrestrial/TERRESTRIAL_MAMMALS.shp") 
@@ -80,21 +78,21 @@ ecoregions <- st_read("C:/Users/omidd/Box Sync/GIS Files/Ecoregions of the World
 # ---- CarniDIET Metadata ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
-# ---- 1. Carnivore species information ----
+# 1. Mammal-consumer species ----
 
 # How many ... in CarniDIET
-nlevels(carnidiet$scientificNameCarni) # 103 species
-nlevels(carnidiet$scientificNameCarni)
+nlevels(carnidiet$scientificNameCarni) # 103 species names
+nlevels(carnidiet$commonNameCarni) # 103 common names
 nlevels(carnidiet$orderCarni) # 5 orders
 nlevels(carnidiet$familyCarni)  # 15 families
 
 # How many levels of:
 nlevels(carnidiet$lifeStageCarni) # 4 ages/life-stages
-nlevels(carnidiet$sex) # Both sexes and both/unknown
+nlevels(carnidiet$sex) # Male and female and both
 
 
 
-# ---- 2. Diet resolution information -----
+# 2. Diet resolution -----
 
 # How many levels for food-type variables:
 # the '-1' accounts for "" entries which could be treated as NA's...
@@ -107,7 +105,7 @@ nlevels(carnidiet$scientificNamePrey) # 824 prey binomials
 nlevels(carnidiet$commonNameprey) # 1635 common names
 
 # How many domestic animals
-dom <- carnidiet %>% filter(Domestic.Agricultural == 1) %>% droplevels()
+dom <- carnidiet %>% filter(domesticOrAgricultural == 1) %>% droplevels()
 levels(dom$scientificNamePrey)
 
 # Categories of taxonomic precision
@@ -122,7 +120,7 @@ range(carnidiet[!is.na(carnidiet$sampleSizeKillsPreyItems),]$sampleSizeKillsPrey
 
 
 
-# ---- 3. Temporal information ----
+# 3. Temporal ----
 
 # Range in study years
 range(carnidiet[!is.na(carnidiet$startYear),]$startYear) # 1933 to 2017
@@ -141,14 +139,16 @@ nlevels(factor(carnidiet[!is.na(carnidiet$endDayOfYear),]$endDayOfYear))
 levels(carnidiet$season) # 45 seasons
 
 
-# ----- 4. Methods information ----
-levels(carnidiet$methodQuantification) # 9 quantification methods
-levels(carnidiet$samplingProtocol) # 20 Diet Sample Origins
+# 4. Methods ----
+
+# Quantification methods and sampling protocols
+levels(carnidiet$methodQuantification) # 9 Quantification methods
+levels(carnidiet$samplingProtocol) # 20 diet sampling protocols
 
 
 
+# 5. Spatial information -----
 
-# ----- 5. Spatial information -----
 # Altitude
 range(carnidiet[!is.na(carnidiet$maximumElevationInMeters),]$maximumElevationInMeters) # 0 - 8156m
 range(carnidiet[!is.na(carnidiet$minimumElevationInMeters),]$minimumElevationInMeters) # 0 - 4543m
@@ -166,8 +166,8 @@ levels(carnidiet$country) # 98 countries
 levels(carnidiet$stateProvince) # 156 higher level administrative units 
 levels(carnidiet$county) # 81 lower level administrative units
 levels(carnidiet$municipality) # 118 lower level administrative units
-levels(carnidiet$verbatimLocality) # 343 general descriptions or non-official name places
-levels(carnidiet$protectedAreaHigher) # 257 areas of some level of protection
+levels(carnidiet$verbatimLocality) # 344 general descriptions or non-official name places
+levels(carnidiet$protectedAreaHigher) # 256 areas of some level of protection
 levels(carnidiet$protectedAreaLower) # 3 lower level descriptions of site in protected area
 levels(carnidiet$islandGroup) # 3 island groups
 levels(carnidiet$island) # 28 islands
@@ -176,20 +176,19 @@ levels(carnidiet$island) # 28 islands
 # Range of study area size
 carnidiet$studyAreaSize <- as.numeric(as.character(carnidiet$studyAreaSize))
 range(carnidiet[!is.na(carnidiet$studyAreaSize),]$studyAreaSize) # 0.03 to 100,000km2
-
+summary(carnidiet$studyAreaSize)
 
 # ---- 6. Bibliographic information ----
-levels(carnidiet$PR.Author) # 612
-range(carnidiet$PR.Year) # 1952 to 2019
-levels(carnidiet$PR.Title) # 722 titles of studies
-levels(carnidiet$PR.Journal) # 196 Journals
-levels(carnidiet$PrimaryRef) # 722 sources
-levels(carnidiet$CollectionRef) # 690 Collection Refs
+levels(carnidiet$sourcePrimaryReference) # 722
+range(carnidiet$sourceYear) # 1952 to 2019
+levels(carnidiet$sourceTitle) # 722 titles of studies
+levels(carnidiet$sourceJournal) # 196 Journals
+levels(carnidiet$sourceCollectionReference) # 690 Collection Refs
 
 
 # 7. Number of studies ----
 
-# A study is a subset of a source, and contain multiple breakdowns of a species' diet composition between years, or seasons and with multiple m
+# A study is a subset of a source and can contain multiple breakdowns of a species' diet composition between years, or seasons and with multiple
 # quantification methods.
 colnames(carnidiet)
 
@@ -209,7 +208,7 @@ carni.studies <- carnidiet %>%
                   startYear, endYear, startMonth, endMonth, season, 
                   
                   # Unique source
-                  PR.Title) %>%  
+                  sourcePrimaryReference) %>%  
   
   dplyr::summarise(x = length(scientificNameCarni))
 
@@ -225,7 +224,7 @@ carni.studies <- carni.studies %>%
                            decimalLatitude, decimalLongitude,
                            
                            # Unique source
-                           PR.Title) %>% 
+                  sourcePrimaryReference) %>% 
   dplyr::summarise(seasons = length(unique(season)),
                    years = length(unique(startYear)),
                    methods = length(unique(methodQuantification)),
@@ -234,31 +233,34 @@ carni.studies <- carni.studies %>%
 
 # How many are singles:
 nrow(carni.studies %>% filter(seasons == 1 & years == 1)) # 196
-994/1312
+994/1310
+
 
 
 # How many are seasonal comparisons:
 nrow(carni.studies %>% filter(seasons > 1 & years == 1)) # 196
-196/1312
+196/1310
 
 # How many are time-series?
 nrow(carni.studies %>% filter(seasons == 1 & years > 1)) # 51
-51/1312
+51/1310
 
 # How many are seasonal-comparison time-series?
 nrow(carni.studies %>% filter(seasons > 1 & years > 1)) # 71
-71/1312
+71/1310
 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- Taxonomy represented  ----
+# Potential mammal-consumer species covered by diet studies  ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # How many potential ...?
+# Species
 length(unique(cd.wos.hits$Bin.)) # 210 species
 nlevels(cd.wos.hits$Order) # 9 orders
 nlevels(cd.wos.hits$Family) # 23 families
 
+# How many species in each family?
 table(cd.wos.hits$Family)
 
 # ---- Family representation in diet sources -----
@@ -360,8 +362,8 @@ genus.info <- genus.info %>% arrange(orderCarni, familyCarni, Genus_V_1.2)
 
 
 # ---- Tables: Family & genus level representation in dietary studies ----
-write.csv(family.info, "../Tables/Family.Information.Summary_UPDATE.csv")
-write.csv(genus.info, "../Tables/Genus.Information.Summary_UPDATE.csv")
+#write.csv(family.info, "../Tables/Family.Information.Summary_UPDATE.csv")
+#write.csv(genus.info, "../Tables/Genus.Information.Summary_UPDATE.csv")
 
 
 # ---- Supplementary figure: Scatterplot family-level diet representation ----
@@ -429,12 +431,12 @@ ggsave(filename = paste0("../Final figures/Figure S1/PercentFamiliesStudiedUpdat
 
 # Supplementary figure: Barplot for top-20 studied species in database ----
 
-# There are 722 sources used. How many feature specific species?
+# There are 719 sources used. How many feature specific species?
 
 # Number of sources feature each species
 carnivore.summary <- carnidiet %>%
                      dplyr::group_by(familyCarni, scientificNameCarni) %>%
-                     dplyr::summarise(papers = length(unique(PrimaryRef)))
+                     dplyr::summarise(papers = length(unique(sourcePrimaryReference)))
  
 # There are 1312 studies. How many for each species?
 
@@ -448,7 +450,7 @@ carni.studies <- carnidiet %>%
                   decimalLatitude, decimalLongitude,
                   
                   # Unique source
-                  PR.Title) %>% 
+                  sourcePrimaryReference) %>% 
   dplyr::summarise(x = length(scientificNameCarni))
 
 carnivore.summary.3 <- carni.studies %>%
@@ -459,7 +461,7 @@ carnivore.summary.master <- merge(carnivore.summary, carnivore.summary.3, by = "
 
 # How many studies are there
 sum(carnivore.summary.master$studies) # 1312 - This is all individual studies
-1312/722 # On average, there are 1.8 studies per source
+1310/719 # On average, there are 1.8 studies per source
 
 # What makes 50% studies?
 # 656 = 50% studies
@@ -476,9 +478,9 @@ y$CarniBinom <- factor(y$CarniBinom)
 levels(y$CarniBinom)
 
 # How many species need to be included to get 50% of the studies?
-(sum(x[1:5,]$studies)/1312)*100 #  9 species includes just over 50% studies
-(sum(x[1:12,]$studies)/1312)*100 #  9 species includes just over 50% studies
-(sum(x[1:20,]$studies)/1312)*100 # 20 species includes 70% studies
+(sum(x[1:5,]$studies)/1310)*100 #  9 species includes just over 50% studies
+(sum(x[1:12,]$studies)/1310)*100 #  9 species includes just over 50% studies
+(sum(x[1:20,]$studies)/1310)*100 # 20 species includes 70% studies
 
 # Rename species factor levels for figure
 y$CarniBinom <- revalue(y$CarniBinom, c("Vulpes_vulpes" = "V. vulpes", "Lynx_lynx" = "L. lynx",
@@ -544,13 +546,13 @@ ggsave(filename = paste0("../Final figures/Figure S2/Top-20 studied species.tiff
 
 # Download phylogeny from PHYLACINE
 # Save  phylogeny in  repository behind the one with this project
-forest <- read.nexus("../Phylogenies/Complete_phylogeny.nex")
+forest <- read.nexus("../Phylacine/Phylogenies/Complete_phylogeny.nex")
 names(forest) <- NULL
 set.seed(42)
 forest <- forest[sample(1:1000, 30)]
 
 # Species list in CarniDIET
-(sp <- levels(carnivore.summary.master$CarniBinom))
+(sp <- levels(carnivore.summary.master$Binomial.1.2))
 
 # Trim tree down to CarniDIET species list
 pruned.forest <- lapply(forest, 
@@ -637,11 +639,10 @@ ggsave("../Final figures/Figure 2/barplot updated.pdf", barplot,
 # Add figures together later in Inkscape
 
 
-
 # Supplementary figure: Repeat with all mammal-consumers ----
 
 # Reload phylogeny
-forest <- read.nexus("../Phylogenies/Complete_phylogeny.nex")
+forest <- read.nexus("../Phylacine/Phylogenies/Complete_phylogeny.nex")
 names(forest) <- NULL
 set.seed(42)
 forest <- forest[sample(1:1000, 30)]
@@ -740,14 +741,12 @@ ggsave("../Final figures/Figure S3/Phylo tree_ALL Species.pdf", p,
 
 
 #————————————————————————————————————————————————————————————————————————————————————————————####
-# ---- Spatio-temporal distribution of dietary studies ----
+# Spatial and temporal distribution of diet studies ----
 #————————————————————————————————————————————————————————————————————————————————————————————####
 
 # Need to talk about this in the context of where species are distributed:
 ranges$binomial <- gsub(" ", "_", ranges$binomial)
 ranges$binomial <- as.factor(ranges$binomial)
-which(!levels(cd.wos.hits$Bin.) %in% levels(ranges$binomial)) # For some reason, 4 species are missing...
-
 ranges.1 <- ranges[ranges$binomial %in% c(levels(cd.wos.hits$Bin.)),]
 
 # Convert ecoregion polygons into a shapefile per ecoregion
@@ -755,12 +754,13 @@ ecoregions.2 <- ecoregions %>% dplyr::group_by(ECO_NAME) %>% dplyr::summarize()
 
 # Convert carnivore range polygons into a shapefile per carnivore
 ranges.2 <- ranges %>% dplyr::group_by(binomial) %>% dplyr::summarize()
-                 
+
+# Identify which ecoregions a species' range overlaps                 
 new.df <- matrix(ncol = nlevels(cd.wos.hits$Bin.),
                  nrow = nrow(ecoregions.2))
-
 colnames(new.df) <- levels(cd.wos.hits$Bin.)
 
+# Run for-loop
 for(i in 1:length(levels(cd.wos.hits$Bin.))) {
   
   if(length(unique(i == c(9,122,170,194))) > 1) {
@@ -786,21 +786,19 @@ for(i in 1:length(levels(cd.wos.hits$Bin.))) {
   
 }
 
+# Tidy dataframe
 new.df[is.na(new.df)] <- 0
-
-hist(rowSums(new.df))
-
 ecoregions.2$SpecRich <- NA
 ecoregions.2$SpecRich <- rowSums(new.df)
 
-# Get the species richness of missing species
+# Species richness of missing species
 miss <- which(!colnames(new.df) %in% levels(carnidiet$scientificNameCarni))
 missing.species <- new.df[, miss]
 
 ecoregions.2$MissingSpecRich <- NA
 ecoregions.2$MissingSpecRich <- rowSums(missing.species)
 
-# Remove Rock and Ice and Lake
+# Remove 'Rock & Ice' and 'Lake'
 levels(ecoregions.2$ECO_NAME)
 ecor.2.tidy <- ecoregions.2[!ecoregions.2$SpecRich > 30,]
 str(ecor.2.tidy)
@@ -844,7 +842,7 @@ temporal.diet <- carnidiet %>%
                   startYear, endYear, 
                   
                   # Unique source
-                  PR.Title) %>%  
+                  sourcePrimaryReference) %>%  
   
   dplyr::summarise(x = length(scientificNameCarni))
 
@@ -958,7 +956,7 @@ colours.updated.again <- c("#CCCCCC","#99CC00","#999999","#339900","#CC9900","#F
 # Plot map
 p2 <- ggplot() +
   geom_sf(data = ecor.2.tidy, aes(fill = SpecRich), colour = NA, alpha =0.7) +
-  scale_fill_gradient(low = "white", high = "black") +
+  scale_fill_gradient(low = "white", high = "black", guide = "Ecoregion SR") +
   geom_sf(data = world, fill = NA, colour = "black", lwd = 0.1, alpha = 0.4) +
   new_scale_fill() +
   geom_sf(data = temporal.diet.sp, aes(fill = familyCarni), 
@@ -971,12 +969,15 @@ p2 <- ggplot() +
                         panel.border = element_blank(),
                         panel.background = element_blank())
 
+ggsave("../Final figures/Figure 1/Map but fpor the additional legend.pdf", p2,
+       width = 8, height = 8, units = "in")
+
 p3 <- ggarrange(p1,
                 p2,
                 ncol=1, nrow=2, labels = "auto",
                 common.legend = TRUE, legend="right")
    
-ggsave("../Final figures/Figure 1/Combined spatio-temporal_mollweide UPDATED.pdf", p3, 
+ggsave("../Final figures/Figure 1/Combined spatio-temporal_mollweide UPDATED AGAIN.pdf", p3, 
        width = 8, height = 8, units = "in")
 
 
@@ -1015,12 +1016,12 @@ ecoregions.3[is.na(ecoregions.3$study.count),]$study.count <- 0
 
 cor.test(ecoregions.3$SpecRich, ecoregions.3$study.count)
 
-cor <- ggplot(data = ecoregions.3[ecoregions.3$SpecRich < 30,], aes(x = SpecRich, y = study.count)) +
+(cor <- ggplot(data = ecoregions.3[ecoregions.3$SpecRich < 30,], aes(x = SpecRich, y = study.count)) +
   geom_jitter(pch = 21, colour = "black", fill = "lightgrey", size = 1.75, alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, colour = "black") + 
   labs(x = "Mammal-consumer species richness per ecoregion", y = "Number of studies per ecoregion") +
   theme_bw() +
-  theme(panel.grid = element_blank())
+  theme(panel.grid = element_blank()))
 
 ggsave("../Final figures/Figure SX/Ecoregion species richness plot.tiff", cor,
        width = 4, height = 4, units = "in")
@@ -1219,17 +1220,17 @@ diet.method.summary$Perc <- (diet.method.summary$count/diet.method.summary$total
   xlab("Sampling protocol") + ylab("Records (%)") +
   # Add number of 
   scale_fill_brewer(palette = "Greys") +
-  annotate("text", x = 1, y = 105, label = "(17266)", size = 1.5) +
-    annotate("text", x = 2, y = 105, label = "(6238)", size = 1.5) +
-    annotate("text", x = 3, y = 105, label = "(2378)", size = 1.5) +
-    annotate("text", x = 4, y = 105, label = "(1266)", size = 1.5) +
-    annotate("text", x = 5, y = 105, label = "(936)", size = 1.5) +
-    annotate("text", x = 6, y = 105, label = "(123)", size = 1.5) +
-    annotate("text", x = 7, y = 105, label = "(108)", size = 1.5) +
+  annotate("text", x = 1, y = 105, label = "(17266)", size = 2.6) +
+    annotate("text", x = 2, y = 105, label = "(6238)", size = 2.6) +
+    annotate("text", x = 3, y = 105, label = "(2378)", size = 2.6) +
+    annotate("text", x = 4, y = 105, label = "(1266)", size = 2.6) +
+    annotate("text", x = 5, y = 105, label = "(936)", size = 2.6) +
+    annotate("text", x = 6, y = 105, label = "(123)", size = 2.6) +
+    annotate("text", x = 7, y = 105, label = "(108)", size = 2.6) +
     
-    theme(axis.text = element_text(size = 6),
-          legend.text = element_text(size = 4),
-          axis.title = element_text(size = 6),
+    theme(axis.text = element_text(size = 8),
+          legend.text = element_text(size = 6),
+          axis.title = element_text(size = 8),
           legend.title = element_blank(),
           #axis.text.x = element_blank(),
           #axis.title.x = element_blank(),
@@ -1280,17 +1281,17 @@ sum(diet.resolution[diet.resolution$taxonRankPrey == "Genus",]$count)/29121
   #scale_y_continuous(limits = c(0,18000), expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   xlab("Sampling protocol") + ylab("Records (%)") +
-    annotate("text", x = 1, y = 105, label = "(17408)", size = 1.5) +
-    annotate("text", x = 2, y = 105, label = "(6242)", size = 1.5) +
-    annotate("text", x = 3, y = 105, label = "(2364)", size = 1.5) +
-    annotate("text", x = 4, y = 105, label = "(1156)", size = 1.5) +
-    annotate("text", x = 5, y = 105, label = "(682)", size = 1.5) +
-    annotate("text", x = 6, y = 105, label = "(188)", size = 1.5) +
-    annotate("text", x = 7, y = 105, label = "(119)", size = 1.5) +
+    annotate("text", x = 1, y = 105, label = "(17408)", size = 2.6) +
+    annotate("text", x = 2, y = 105, label = "(6242)", size = 2.6) +
+    annotate("text", x = 3, y = 105, label = "(2364)", size = 2.6) +
+    annotate("text", x = 4, y = 105, label = "(1156)", size = 2.6) +
+    annotate("text", x = 5, y = 105, label = "(682)", size = 2.6) +
+    annotate("text", x = 6, y = 105, label = "(188)", size = 2.6) +
+    annotate("text", x = 7, y = 105, label = "(119)", size = 2.6) +
     guides(fill = guide_legend(nrow = 1)) +
-    theme(axis.text = element_text(size = 6),
-        legend.text = element_text(size = 3),
-        axis.title = element_text(size = 6),
+    theme(axis.text = element_text(size = 8),
+        legend.text = element_text(size = 6),
+        axis.title = element_text(size = 8),
         legend.title = element_blank(),
         #axis.text.x = element_blank(),
         #axis.title.x = element_blank(),
