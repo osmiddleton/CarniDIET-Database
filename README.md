@@ -28,13 +28,10 @@ Version 1.0 consists of quantitative data on the dietary composition of 103 spec
 
 # Future updates
 - Papers for 103 mammal-consumer species published since March 2019.
-
-- Any missing diet records in sources in CarniDIET.
-
+- Any missed diet records in sources in CarniDIET.
+- Higher resolution records of non-mammalian diet records.
 - Including further search criteria in WoS searches.
- 
 - Including further databases in searches (Zoological Records).
-
 - Including further species not included in MammalDIET:
     - Dingos (Canis dingo)
     - Feral cats (Felis catus)
