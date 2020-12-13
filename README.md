@@ -1,7 +1,7 @@
 ![GitHub Logo](/images/logo.png)
 
 # CarniDIET: A database of the diets of terrestrial, carnivorous mammals
-The behaviour of carnivores within ecosystems has been widely studied across the world. In particular, their feeding behaviours, including the composition of their diets, has been studied in relatively standardised ways present the opportunity to study the variation in their ecological functions through space and time.
+The behaviour of carnivores within ecosystems has been widely studied across the world. In particular, their feeding behaviours, including the composition of their diets, has been studied using standardised methods and presents the opportunity to study the variation in their ecological functions through space and time.
 
 
 # Aim
