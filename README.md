@@ -1,7 +1,7 @@
 ![GitHub Logo](/images/logo.png)
 
 # CarniDIET: A database of the diets of terrestrial, carnivorous mammals
-The behaviour of carnivores within the world's ecosystems have been a hot topic of research for years. One such facet of their behaviour that has been heavily studied is that of their feeding behaviours, including the composition of a species' diet. In other words, the study of what individuals from the same species eat over a given unit of space and time.
+The behaviour of carnivores within ecosystems has been widely studied across the world. In particular, their feeding behaviours, including the composition of their diets, has been studied using standardised methods and presents the opportunity to study the variation in their ecological functions through space and time.
 
 
 # Aim
@@ -28,13 +28,10 @@ Version 1.0 consists of quantitative data on the dietary composition of 103 spec
 
 # Future updates
 - Papers for 103 mammal-consumer species published since March 2019.
-
-- Any missing diet records in sources in CarniDIET.
-
+- Any missed diet records in sources in CarniDIET.
+- Higher resolution records of non-mammalian diet records.
 - Including further search criteria in WoS searches.
- 
 - Including further databases in searches (Zoological Records).
-
 - Including further species not included in MammalDIET:
     - Dingos (Canis dingo)
     - Feral cats (Felis catus)
