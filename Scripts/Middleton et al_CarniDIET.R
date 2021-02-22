@@ -179,12 +179,10 @@ range(carnidiet[!is.na(carnidiet$studyAreaSize),]$studyAreaSize) # 0.03 to 100,0
 summary(carnidiet$studyAreaSize)
 
 # ---- 6. Bibliographic information ----
-levels(carnidiet$sourcePrimaryReference) # 722
+levels(carnidiet$sourcePrimaryReference) # 719
 range(carnidiet$sourceYear) # 1952 to 2019
-levels(carnidiet$sourceTitle) # 722 titles of studies
 levels(carnidiet$sourceJournal) # 196 Journals
 levels(carnidiet$sourceCollectionReference) # 690 Collection Refs
-
 
 # 7. Number of studies ----
 
@@ -1239,6 +1237,75 @@ diet.method.summary$Perc <- (diet.method.summary$count/diet.method.summary$total
 
 ggsave("../Final figures/test.tiff", p1, width = 3, height = 3.5)
 
+
+# ---- Supplementary Figure: Number of records used from each source and methods used in each source ----
+diet.method.summary <- carnidiet %>% dplyr::group_by(samplingProtocol, methodQuantification) %>% dplyr::summarise(count = length(methodQuantification))
+
+
+# Need to show as percentages
+# Get counts for eaxh sample source
+sample.count <- diet.method.summary %>% dplyr::group_by(samplingProtocol) %>% dplyr::summarize(total.count = sum(count)) 
+
+
+# Merge
+diet.method.summary <- merge(diet.method.summary, sample.count, by = "samplingProtocol", all.x = TRUE)
+# Get percentages
+diet.method.summary$Perc <- (diet.method.summary$count/diet.method.summary$total.count)*100
+
+diet.method.summary.sum <- diet.method.summary %>% dplyr::group_by(samplingProtocol) %>% dplyr::summarise(sum = sum(count))
+diet.method.summary.sum$samplingProtocol <- reorder(diet.method.summary.sum$samplingProtocol, -diet.method.summary.sum$sum)
+diet.method.summary.sum <- arrange(diet.method.summary.sum, -diet.method.summary.sum$sum)
+
+levels(sampling.protocol.sum$samplingProtocol)
+
+diet.method.summary$samplingProtocol <- factor(diet.method.summary$samplingProtocol, levels(diet.method.summary.sum$samplingProtocol))
+
+
+# Get percentages
+diet.method.summary$Perc <- (diet.method.summary$count/diet.method.summary$total.count)*100
+
+(p1 <- ggplot(diet.method.summary, aes(x = samplingProtocol, y = Perc, fill = methodQuantification)) +
+    geom_bar(stat = "identity", colour = "black", lwd = 0.1) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = .5)) +
+    #scale_y_continuous(limits = c(0,18000), expand = c(0, 0)) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    xlab("Sampling protocol") + ylab("Records (%)") +
+    # Add number of 
+    scale_fill_brewer(palette = "Paired") +
+    annotate("text", x = 1, y = 105, label = "(17490)", size = 2.6) +
+    annotate("text", x = 2, y = 105, label = "(6249)", size = 2.6) +
+    annotate("text", x = 3, y = 105, label = "(2444)", size = 2.6) +
+    annotate("text", x = 4, y = 105, label = "(1301)", size = 2.6) +
+    annotate("text", x = 5, y = 105, label = "(936)", size = 2.6) +
+    annotate("text", x = 6, y = 105, label = "(188)", size = 2.6) +
+    annotate("text", x = 7, y = 105, label = "(128)", size = 2.6) +
+    annotate("text", x = 8, y = 105, label = "(119)", size = 2.6) +
+    annotate("text", x = 9, y = 105, label = "(77)", size = 2.6) +
+    annotate("text", x = 10, y = 105, label = "(48)", size = 2.6) +
+    annotate("text", x = 11, y = 105, label = "(40)", size = 2.6) +
+    annotate("text", x = 12, y = 105, label = "(26)", size = 2.6) +
+    annotate("text", x = 13, y = 105, label = "(17)", size = 2.6) +
+    annotate("text", x = 14, y = 105, label = "(15)", size = 2.6) +
+    annotate("text", x = 15, y = 105, label = "(11)", size = 2.6) +
+    annotate("text", x = 16, y = 105, label = "(10)", size = 2.6) +
+    annotate("text", x = 17, y = 105, label = "(8)", size = 2.6) +
+    annotate("text", x = 18, y = 105, label = "(6)", size = 2.6) +
+    annotate("text", x = 19, y = 105, label = "(6)", size = 2.6) +
+    annotate("text", x = 20, y = 105, label = "(2)", size = 2.6) +
+    theme(axis.text = element_text(size = 8),
+          legend.text = element_text(size = 6),
+          axis.title = element_text(size = 8),
+          legend.title = element_blank(),
+          #axis.text.x = element_blank(),
+          #axis.title.x = element_blank(),
+          legend.position="top",
+          legend.key.size =  unit(0.1, "in")))
+
+ggsave("../Final figures/Figure S9.tiff", p1,
+       width = 8, height = 4)
+
+
 # ---- Figure: Number of records used for each source and the breakdown of taxonomic resolution ----
 diet.resolution  <- carnidiet %>% dplyr::group_by(samplingProtocol, taxonRankPrey) %>% dplyr::summarise(count = length(taxonRankPrey))
 diet.resolution <- diet.resolution[diet.resolution$count > 100 |
@@ -1312,6 +1379,91 @@ ggsave("../Final figures/test3.tiff", p4,
 # Save plot
 ggsave("../Final figures/Figure 2/DietResolutionSummary_long.pdf", p4,
        width = 6, height = 3.5, units = "in")
+
+
+# ---- S figure: ALL RECORDS for sampling protocol and the breakdown of taxonomic resolution ----
+diet.resolution  <- carnidiet %>% dplyr::group_by(samplingProtocol, taxonRankPrey) %>% dplyr::summarise(count = length(taxonRankPrey))
+
+# Need to show as percentages
+# Get counts for eaxh sample source
+sample.count <- diet.resolution %>% dplyr::group_by(samplingProtocol) %>% dplyr::summarize(total.count = sum(count)) 
+
+# Merge
+diet.resolution <- merge(diet.resolution, sample.count, by = "samplingProtocol", all.x = TRUE)
+
+# Get percentages
+diet.resolution$Perc <- (diet.resolution$count/diet.resolution$total.count)*100
+
+# Percentage of records in database for each taxon rank out of 29121 records
+
+sum(diet.resolution[diet.resolution$taxonRankPrey == "Species",]$count)/29121
+sum(diet.resolution[diet.resolution$taxonRankPrey == "Class",]$count)/29121
+sum(diet.resolution[diet.resolution$taxonRankPrey == "Genus",]$count)/29121
+
+sampling.protocol.sum <- diet.resolution %>% dplyr::group_by(samplingProtocol) %>% dplyr::summarise(sum = sum(count))
+sampling.protocol.sum$samplingProtocol <- reorder(sampling.protocol.sum$samplingProtocol, -sampling.protocol.sum$sum)
+sampling.protocol.sum <- arrange(sampling.protocol.sum, -sampling.protocol.sum$sum)
+
+levels(sampling.protocol.sum$samplingProtocol)
+
+
+diet.resolution$samplingProtocol <- factor(diet.resolution$samplingProtocol, levels(sampling.protocol.sum$samplingProtocol))
+
+# Plot figure
+(p <- ggplot(diet.resolution, aes(x = samplingProtocol, y = Perc, fill = taxonRankPrey)) +
+    geom_bar(stat = "identity", colour = "black", lwd = 0.1) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = .5)) +
+    scale_fill_brewer(palette = "Paired") +
+    #scale_y_continuous(limits = c(0,18000), expand = c(0, 0)) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    xlab("Sampling protocol") + ylab("Records (%)") +
+    annotate("text", x = 1, y = 105, label = "(17490)", size = 2.6) +
+    annotate("text", x = 2, y = 105, label = "(6249)", size = 2.6) +
+    annotate("text", x = 3, y = 105, label = "(2444)", size = 2.6) +
+    annotate("text", x = 4, y = 105, label = "(1301)", size = 2.6) +
+    annotate("text", x = 5, y = 105, label = "(936)", size = 2.6) +
+    annotate("text", x = 6, y = 105, label = "(188)", size = 2.6) +
+    annotate("text", x = 7, y = 105, label = "(128)", size = 2.6) +
+    annotate("text", x = 8, y = 105, label = "(119)", size = 2.6) +
+    annotate("text", x = 9, y = 105, label = "(77)", size = 2.6) +
+    annotate("text", x = 10, y = 105, label = "(48)", size = 2.6) +
+    annotate("text", x = 11, y = 105, label = "(40)", size = 2.6) +
+    annotate("text", x = 12, y = 105, label = "(26)", size = 2.6) +
+    annotate("text", x = 13, y = 105, label = "(17)", size = 2.6) +
+    annotate("text", x = 14, y = 105, label = "(15)", size = 2.6) +
+    annotate("text", x = 15, y = 105, label = "(11)", size = 2.6) +
+    annotate("text", x = 16, y = 105, label = "(10)", size = 2.6) +
+    annotate("text", x = 17, y = 105, label = "(8)", size = 2.6) +
+    annotate("text", x = 18, y = 105, label = "(6)", size = 2.6) +
+    annotate("text", x = 19, y = 105, label = "(6)", size = 2.6) +
+    annotate("text", x = 20, y = 105, label = "(2)", size = 2.6) +
+    guides(fill = guide_legend(nrow = 1)) +
+    theme(axis.text = element_text(size = 8),
+          legend.text = element_text(size = 6),
+          axis.title = element_text(size = 8),
+          legend.title = element_blank(),
+          #axis.text.x = element_blank(),
+          #axis.title.x = element_blank(),
+          legend.position="top",
+          legend.key.size =  unit(0.1, "in")))
+
+ggsave("../Final figures/Figure S8.tiff", p,
+       width = 8, height = 3.5)
+
+# Plot both figures together
+(p4 <- ggarrange(p + theme(axis.ticks.x = element_blank()),
+                 p1 + theme(axis.ticks.x = element_blank()),
+                 ncol=2, nrow=1, labels = "auto"))
+
+ggsave("../Final figures/test3.tiff", p4,
+       width = 6, height = 3.5)
+
+# Save plot
+ggsave("../Final figures/Figure 2/DietResolutionSummary_long.pdf", p4,
+       width = 6, height = 3.5, units = "in")
+
+
 
 # Summary statistics
 table(carnidiet$Sample.Source)
