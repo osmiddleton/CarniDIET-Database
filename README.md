@@ -1,7 +1,7 @@
 ![GitHub Logo](/images/logo.png)
 
 # CarniDIET: A database of the diets of terrestrial, carnivorous mammals
-The ecology of carnivores have been studied in ecosystems across the world. One facet of their ecology, their feeding ecology, is widely studied using standardised methods that describe the diet compositions of a population at a particular site over a given time period. In isolation, this information provides a valuable contribution to our ecological knowledge of a species at a particular location in their geographic range. In combination, these sources provide an opportunity to study species' dietary variation through space and time at macroecological scales.
+The ecology of carnivores have been studied in ecosystems across the world. One facet of their ecology, their feeding ecology, is widely studied using standardised methods that describe the diet compositions of a population at a site over a given time period. In isolation, this information provides a valuable contribution to our ecological knowledge of a species in a particular location within their geographic range. In combination, these sources provide an opportunity to study species' dietary variation through space and time at macroecological scales.
 
 
 # Aim
