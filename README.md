@@ -12,7 +12,7 @@ The aim of CarniDIET is to be the first open-access database available for acces
 # 1.0
 Version 1.0 consists of quantitative data on the diet compositions for 103 species of terrestrial, carnivorous mammals from (mostly) peer-reviewed scientific papers. Species selected were those that primarily consume mammals as a food type from MammalDIET (Kissling et al., 2014).
 
-For a full description of the database, see: *Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. In review.*
+For a full description of CarniDIET 1.0, see: *Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. In review.*
 
 
 # Download instructions
@@ -24,7 +24,7 @@ While you can clone this repository, there are three options to download CarniDI
 
 
 # Future updates
-As with any form of data collection, we are aware there will likely be errors within the database. To ensure we build an accurate and precise database that best reflects reported data from the primary sources, we encourage users to keep note of any transcription errors that occurred in the database by directly contacting Owen Middleton. As well as correcting these in future updates, we will also be including:
+As with any form of data collection, we are aware there will likely be errors within the database. To ensure we build an accurate and precise database that best reflects reported data from the primary sources, we encourage users to keep note of any transcription errors and contact Owen Middleton. As well as correcting these in future updates, we will also be including:
 
 - Papers for 103 mammal-consumer species published since March 2019.
 - Any missed diet records in sources in CarniDIET.
