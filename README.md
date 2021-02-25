@@ -10,9 +10,12 @@ To act as an open-access database for quantitative data on the population-level 
 
 # Version information
 # 1.0
+
+*Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. In review.*
+
+
 Version 1.0 consists of quantitative data on the diet compositions for 103 species of terrestrial, carnivorous mammals from (mostly) peer-reviewed scientific papers. Species selected were those that primarily consume mammals as a food type from MammalDIET (Kissling et al., 2014).
 
-For a full description of CarniDIET 1.0, see: *Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. In review.*
 
 
 # Download instructions
