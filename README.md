@@ -17,7 +17,7 @@ While you can clone this repository, there are three options to download CarniDI
 
 
 # Version information
-# 1.0
+# - 1.0
 
 *Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. In review.*
 
