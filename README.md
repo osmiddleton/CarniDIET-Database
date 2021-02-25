@@ -5,7 +5,7 @@ The ecology of carnivores have been studied in ecosystems across the world. One 
 
 
 # Aim
-To act as an open-access database to increase the availability of quantitative data on the population-level diets of the world's terrestrial, carnivorous mammals for use in macroevolutionary, macroecological, and conservation research. As CarniDIET is just the tip of the diet data-iceburg, we aim to build upon this in the future to integrate data (1) from more sources, and (2) for more species, including ideally beyond mammals. We are eager to collaborate and to ensure these data are as useable for a wide audience, so we would welcome any feedback for future improvements.
+To act as an open-access database for quantitative data on the population-level diets of the world's terrestrial, carnivorous mammals for use in macroevolutionary, macroecological, and conservation research. As CarniDIET is just the tip of the diet data-iceburg, we aim to build upon this in the future to integrate data (1) from more sources, and (2) for more species, including ideally beyond mammals. We are eager to collaborate and to ensure these data are as useable for a wide audience, so we would welcome any feedback for future improvements.
 
 
 # Version information
