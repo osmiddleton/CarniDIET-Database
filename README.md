@@ -12,14 +12,14 @@ To act as an open-access database for quantitative data on the population-level 
 While you can clone this repository, there are three options to download CarniDIET:
 
  - (1) Click the green "Code" icon at the top, and press "Download ZIP". You will download the entire repository, with CarniDIET 1.0 in the 'Version 1.0' folder.
- - (2) Go to the Shiny app (*URL TBC*) and download all, or a subset, of the data.
- - (3) See supplementary material of the original publication: (*URL TBC*).
+ - (2) Go to the Shiny app (https://owen-middleton.shinyapps.io/CarniDIET-Shiny/) and download all, or a subset, of the data.
+ - (3) See supplementary material of the original publication: (https://onlinelibrary.wiley.com/doi/10.1111/geb.13296).
 
 
 # Version information
 # - 1.0
 
-*Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. In review.*
+Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. https://doi.org/10.1111/geb.13296. 
 
 
 Version 1.0 consists of quantitative data on the diet compositions for 103 species of terrestrial, carnivorous mammals from (mostly) peer-reviewed scientific papers. Species selected were those that primarily consume mammals as a food type from MammalDIET (Kissling et al., 2014).
