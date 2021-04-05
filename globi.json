@@ -1,0 +1,238 @@
+{
+  "@context" : [ "http://www.w3.org/ns/csvw", {
+    "@language" : "en"
+  } ],
+  "rdfs:comment" : [ "inspired by https://www.w3.org/TR/2015/REC-tabular-data-model-20151217/" ],
+  "tables" : [ {
+    "@context" : [ "http://www.w3.org/ns/csvw", {
+      "@language" : "en"
+    } ],
+    "rdfs:comment" : [ "inspired by https://www.w3.org/TR/2015/REC-tabular-data-model-20151217/" ],
+    "url" : "Version%201.0/CarniDIET%201.0.csv",
+    "dcterms:bibliographicCitation" : "Middleton, O.S, Svensson, H, Scharlemann, J.P.W, Faurby, S, Sandom, C.J. CarniDIET 1.0: A database of terrestrial carnivorous mammal diets. Global Ecology and Biogeography. https://doi.org/10.1111/geb.13296.",
+    "doi" : "10.1111/geb.13296",
+    "interactionTypeId" : "http://purl.obolibrary.org/obo/RO_0002470",
+    "interactionTypeName" : "eats",
+    "delimiter" : ",",
+    "headerRowCount" : 1,
+    "null" : [ "NA" ],
+    "tableSchema" : {
+      "columns" : [ {
+        "name" : "recordID",
+        "titles" : "recordID",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceTaxonOrder",
+        "titles" : "orderCarni",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceTaxonFamily",
+        "titles" : "familyCarni",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceTaxonName",
+        "titles" : "scientificNameCarni",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceTaxonCommonName",
+        "titles" : "commonNameCarni",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceSexName",
+        "titles" : "sexCarni",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceLifeStageName",
+        "titles" : "lifeStageCarni",
+        "datatype" : "string"
+      }, {
+        "name" : "foodType",
+        "titles" : "foodType",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonOrder",
+        "titles" : "orderPrey",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonFamily",
+        "titles" : "familyPrey",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonGenus",
+        "titles" : "genusPrey",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonSpecificEpithet",
+        "titles" : "speciesPrey",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonName",
+        "titles" : "scientificNamePrey",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonCommonName",
+        "titles" : "commonNamePrey",
+        "datatype" : "string"
+      }, {
+        "name" : "domesticOrAgricultural",
+        "titles" : "domesticOrAgricultural",
+        "datatype" : "string"
+      }, {
+        "name" : "targetTaxonRankName",
+        "titles" : "taxonRankPrey",
+        "datatype" : "string"
+      }, {
+        "name" : "percentage",
+        "titles" : "percentage",
+        "datatype" : "string"
+      }, {
+        "name" : "percentageError",
+        "titles" : "percentageError",
+        "datatype" : "string"
+      }, {
+        "name" : "basisOfRecordName",
+        "titles" : "dataBasisFromSource",
+        "datatype" : "string"
+      }, {
+        "name" : "sampleSizeScatStomachTissue",
+        "titles" : "sampleSizeScatStomachTissue",
+        "datatype" : "string"
+      }, {
+        "name" : "sampleSizeKillsPreyItems",
+        "titles" : "sampleSizeKillsPreyItems",
+        "datatype" : "string"
+      }, {
+        "name" : "http://rs.tdwg.org/dwc/terms/eventDate",
+        "titles" : "startYear",
+        "datatype" : {
+            "basis" : "date",
+            "format" : "YYYY"
+        }
+      }, {
+        "name" : "endYear",
+        "titles" : "endYear",
+        "datatype" : "string"
+      }, {
+        "name" : "startMonth",
+        "titles" : "startMonth",
+        "datatype" : "string"
+      }, {
+        "name" : "endMonth",
+        "titles" : "endMonth",
+        "datatype" : "string"
+      }, {
+        "name" : "fixedBetweenMonths",
+        "titles" : "fixedBetweenMonths",
+        "datatype" : "string"
+      }, {
+        "name" : "startDayOfYear",
+        "titles" : "startDayOfYear",
+        "datatype" : "string"
+      }, {
+        "name" : "endDayOfYear",
+        "titles" : "endDayOfYear",
+        "datatype" : "string"
+      }, {
+        "name" : "season",
+        "titles" : "season",
+        "datatype" : "string"
+      }, {
+        "name" : "altitude",
+        "titles" : "minimumElevationInMeters",
+        "datatype" : "string"
+      }, {
+        "name" : "maximumElevationInMeters",
+        "titles" : "maximumElevationInMeters",
+        "datatype" : "string"
+      }, {
+        "name" : "geographicRegion",
+        "titles" : "geographicRegion",
+        "datatype" : "string"
+      }, {
+        "name" : "country",
+        "titles" : "country",
+        "datatype" : "string"
+      }, {
+        "name" : "stateProvince",
+        "titles" : "stateProvince",
+        "datatype" : "string"
+      }, {
+        "name" : "county",
+        "titles" : "county",
+        "datatype" : "string"
+      }, {
+        "name" : "municipality",
+        "titles" : "municipality",
+        "datatype" : "string"
+      }, {
+        "name" : "localityName",
+        "titles" : "verbatimLocality",
+        "datatype" : "string"
+      }, {
+        "name" : "protectedAreaHigher",
+        "titles" : "protectedAreaHigher",
+        "datatype" : "string"
+      }, {
+        "name" : "protectedAreaLower",
+        "titles" : "protectedAreaLower",
+        "datatype" : "string"
+      }, {
+        "name" : "islandGroup",
+        "titles" : "islandGroup",
+        "datatype" : "string"
+      }, {
+        "name" : "island",
+        "titles" : "island",
+        "datatype" : "string"
+      }, {
+        "name" : "studyAreaSize",
+        "titles" : "studyAreaSize",
+        "datatype" : "string"
+      }, {
+        "name" : "decimalLatitude",
+        "titles" : "decimalLatitude",
+        "datatype" : "string"
+      }, {
+        "name" : "decimalLongitude",
+        "titles" : "decimalLongitude",
+        "datatype" : "string"
+      }, {
+        "name" : "georeferenceSources",
+        "titles" : "georeferenceSources",
+        "datatype" : "string"
+      }, {
+        "name" : "samplingProtocol",
+        "titles" : "samplingProtocol",
+        "datatype" : "string"
+      }, {
+        "name" : "methodQuantification",
+        "titles" : "methodQuantification",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceAuthor",
+        "titles" : "sourceAuthor",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceYear",
+        "titles" : "sourceYear",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceTitle",
+        "titles" : "sourceTitle",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceJournal",
+        "titles" : "sourceJournal",
+        "datatype" : "string"
+      }, {
+        "name" : "referenceCitation",
+        "titles" : "sourcePrimaryReference",
+        "datatype" : "string"
+      }, {
+        "name" : "sourceCollectionReference",
+        "titles" : "sourceCollectionReference",
+        "datatype" : "string"
+      } ]
+    }
+  } ]
+}

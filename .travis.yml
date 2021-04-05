@@ -1,0 +1,5 @@
+install:
+  - curl -L "https://raw.githubusercontent.com/globalbioticinteractions/globinizer/master/check-dataset.sh"
+    > check-dataset.sh
+  - chmod +x check-dataset.sh
+script: "./check-dataset.sh ${TRAVIS_REPO_SLUG}"

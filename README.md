@@ -36,3 +36,9 @@ As with any form of data collection, we are aware there will likely be errors wi
 - Including other species not included in MammalDIET:
     - Dingos (Canis dingo)
     - Feral cats (Felis catus)
+
+# Indexing
+
+ [![GloBI](http://api.globalbioticinteractions.org/interaction.svg?accordingTo=globi:globalbioticinteractions/CarniDIET-Database)](http://globalbioticinteractions.org/?accordingTo=globi:globalbioticinteractions/CarniDIET-Database)
+
+CarniDIET is configured to be indexed by Global Biotic Interactions (GloBI, https://globalbioticinteractions.org) index.
